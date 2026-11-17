@@ -1,0 +1,1495 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>myTuja 무한매수법 1.0 &amp; 4.0 대시보드</title>
+  <!-- iPadOS / iOS 홈 화면 앱(PWA) 설정 -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="∞ 무한매수" />
+  <meta name="theme-color" content="#0f172a" />
+  <link id="apple-touch-icon-link" rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%232563eb'/%3E%3Cstop offset='100%25' stop-color='%230f172a'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='180' height='180' rx='40' fill='url(%23g)'/%3E%3Ctext x='90' y='88' text-anchor='middle' dominant-baseline='middle' fill='%23ffffff' font-family='sans-serif' font-weight='bold' font-size='84'%3E%E2%88%9E%3C/text%3E%3Ctext x='90' y='142' text-anchor='middle' fill='%23bae6fd' font-family='sans-serif' font-weight='bold' font-size='22'%3E%EB%AC%B4%ED%95%9C%EB%A7%A4%EC%88%98%3C/text%3E%3C/svg%3E" />
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Inter & Noto Sans KR 폰트 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    /* 전역 박스 모델 및 가로 넘침 방지 */
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #f1f5f9;
+      color: #0f172a;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
+
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .no-wrap {
+      white-space: nowrap;
+    }
+
+    /* 일일 체결 결과 입력 폼 반응형 3열 그리드 */
+    .input-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      width: 100%;
+    }
+
+    @media (max-width: 768px) {
+      .input-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 480px) {
+      .input-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      width: 100%;
+    }
+
+    /* 모든 입력 칸 높이(44px) 및 너비(100%) 통일 */
+    .form-control {
+      height: 44px;
+      width: 100%;
+      min-width: 0;
+      min-inline-size: 0;
+      inline-size: 100%;
+      max-width: 100%;
+      padding: 0 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      background-color: #ffffff;
+      font-size: 14px;
+      color: #0f172a;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    /* Safari / iPadOS <input type="date"> 고유 최소 너비 해제 */
+    input[type="date"].form-control {
+      -webkit-appearance: none;
+      appearance: none;
+      display: flex;
+      align-items: center;
+    }
+
+    input[type="date"].form-control::-webkit-date-and-time-value {
+      text-align: left;
+      margin: 0;
+    }
+
+    .form-control:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
+    }
+
+    /* 상단 5대 KPI 1행 고정 (좁은 화면 가로 스크롤) */
+    .kpi-scroll {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(192px, 1fr));
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* 테이블 제목행 가운데 정렬 및 줄바꿈 방지 */
+    #journalTable thead th {
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    /* 커스텀 스크롤바 */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="pb-16">
+
+  <!-- 상단 고정 헤더 -->
+  <header class="bg-slate-900 text-white sticky top-0 z-30 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-2.5">
+        <span class="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-sky-500/20 text-sky-400 font-extrabold text-xl shrink-0">∞</span>
+        <div>
+          <h1 class="text-base sm:text-lg font-extrabold tracking-tight leading-tight">myTuja 무한매수법 1.0 &amp; 4.0 대시보드</h1>
+          <p class="text-[11px] text-slate-400">실전 매매일지 누적 · 전/후반/리버스 모드 듀얼 주문 계산기</p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <!-- 시세 API 상태 배지 -->
+        <button id="apiStatusBadge" type="button" onclick="openApiModal()" class="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 border border-slate-700 text-emerald-300 flex items-center gap-1.5 transition no-wrap cursor-pointer">
+          <span id="apiStatusDot" class="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
+          <span id="apiStatusText">TwelveData 연동됨</span>
+        </button>
+
+        <!-- 실시간 시세 API 설정 버튼 -->
+        <button type="button" onclick="openApiModal()" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-sky-600 hover:bg-sky-500 text-white shadow-sm transition no-wrap cursor-pointer">
+          시세 API 설정
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 pt-5 space-y-5">
+
+    <!-- 1. 기초 운용 설정 (대시보드 인라인 직접 수정 패널) -->
+    <section aria-label="기초 운용 설정" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <h2 class="text-sm font-extrabold text-slate-800 flex items-center gap-1.5">
+          <span class="w-1.5 h-4 bg-blue-600 rounded-full"></span>
+          기초 운용 설정 (직접 입력 · 즉시 반영)
+        </h2>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <!-- 일일 주문 산출 모드 전환 토글 -->
+          <div class="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200 text-xs">
+            <button type="button" id="modeFixedBtn" onclick="setOrderMode('fixed')" class="px-3 py-1 rounded-lg font-bold bg-white text-blue-600 shadow-xs transition no-wrap cursor-pointer">
+              고정수량 기준
+            </button>
+            <button type="button" id="modeAmountBtn" onclick="setOrderMode('amount')" class="px-3 py-1 rounded-lg font-medium text-slate-600 hover:text-slate-900 transition no-wrap cursor-pointer">
+              금액자동 분할
+            </button>
+          </div>
+
+          <!-- 일일 목표 수량 스테퍼 (- 4주 +) -->
+          <div id="fixedQtyStepper" class="inline-flex items-center bg-slate-100 border border-slate-200 rounded-xl px-2 py-1 text-xs">
+            <span class="text-slate-500 font-semibold mr-1.5 no-wrap">일일목표</span>
+            <button type="button" onclick="changeTargetQty(-1)" aria-label="목표 수량 1주 감소" class="w-6 h-6 rounded-lg bg-white border border-slate-200 font-extrabold text-slate-700 hover:bg-slate-50 active:scale-95 transition cursor-pointer">-</button>
+            <span id="targetQtyDisplay" class="px-2.5 font-extrabold text-blue-600 tabular-nums no-wrap">4주</span>
+            <button type="button" onclick="changeTargetQty(1)" aria-label="목표 수량 1주 증가" class="w-6 h-6 rounded-lg bg-white border border-slate-200 font-extrabold text-slate-700 hover:bg-slate-50 active:scale-95 transition cursor-pointer">+</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 6개 핵심 파라미터 1행 배치 -->
+      <div class="grid grid-cols-6 gap-2 overflow-x-auto pb-1">
+        <div class="form-field min-w-[92px]">
+          <label for="cfgTicker" class="text-[11px] font-bold text-slate-500 mb-1 no-wrap text-center">종목 (Ticker)</label>
+          <input id="cfgTicker" type="text" maxlength="12" class="form-control uppercase font-extrabold text-blue-700 px-2.5 text-xs sm:text-sm text-center" value="SOXL" onchange="updateBasicConfig('ticker')" />
+        </div>
+
+        <div class="form-field min-w-[116px]">
+          <label for="cfgKrw" class="text-[11px] font-bold text-slate-500 mb-1 no-wrap text-center">운영원금 (원)</label>
+          <input id="cfgKrw" type="text" inputmode="numeric" class="form-control font-bold tabular-nums px-2.5 text-xs sm:text-sm text-center" value="10,000,000" oninput="formatKrwInput(this)" onchange="updateBasicConfig('krw')" />
+        </div>
+
+        <div class="form-field min-w-[96px]">
+          <label for="cfgRate" class="text-[11px] font-bold text-slate-500 mb-1 no-wrap text-center">적용환율 (원/$)</label>
+          <input id="cfgRate" type="text" inputmode="decimal" class="form-control font-bold tabular-nums px-2.5 text-xs sm:text-sm text-center" value="1,336" oninput="formatDecimalCommaInput(this)" onchange="updateBasicConfig('rate')" />
+        </div>
+
+        <div class="form-field min-w-[108px]">
+          <label for="cfgUsd" class="text-[11px] font-bold text-slate-500 mb-1 no-wrap text-center">달러원금 ($)</label>
+          <input id="cfgUsd" type="text" inputmode="decimal" class="form-control font-extrabold text-blue-700 tabular-nums px-2.5 text-xs sm:text-sm text-center" value="7,485.03" oninput="formatDecimalCommaInput(this)" onchange="updateBasicConfig('usd')" />
+        </div>
+
+        <div class="form-field min-w-[84px]">
+          <label for="cfgSplits" class="text-[11px] font-bold text-slate-500 mb-1 no-wrap text-center">분할수 (40)</label>
+          <input id="cfgSplits" type="number" min="10" max="100" class="form-control font-bold tabular-nums px-2.5 text-xs sm:text-sm text-center" value="40" onchange="updateBasicConfig('splits')" />
+        </div>
+
+        <div class="form-field min-w-[146px]">
+          <div class="flex items-center gap-1 mb-1">
+            <label for="currentPriceInput" class="flex-1 text-[11px] font-bold text-slate-500 no-wrap text-center">실시간 현재가 ($)</label>
+            <span aria-hidden="true" class="px-2.5 text-xs font-bold opacity-0 pointer-events-none select-none shrink-0 no-wrap">조회</span>
+          </div>
+          <div class="flex gap-1">
+            <input id="currentPriceInput" type="text" inputmode="decimal" class="form-control font-extrabold text-emerald-700 tabular-nums px-2 text-xs sm:text-sm text-center" value="48.21" onkeydown="if(event.key==='Enter'){ event.preventDefault(); applyCurrentPrice(); }" />
+            <button type="button" onclick="applyCurrentPrice()" title="입력한 현재가 반영 (빈칸일 경우 API 조회)" class="px-2.5 h-[44px] rounded-[10px] bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold shrink-0 transition no-wrap cursor-pointer">
+              조회
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. 상단 5대 핵심 KPI 요약 카드 (1행 고정 · 줄바꿈 금지) -->
+    <section aria-label="포트폴리오 요약 지표" class="kpi-scroll">
+      <!-- 카드 1: 보유수량 -->
+      <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 overflow-hidden">
+        <div class="text-[11px] font-bold text-slate-500 no-wrap">보유수량</div>
+        <div id="kpiQty" class="text-[15px] font-extrabold text-slate-900 mt-1 tabular-nums no-wrap text-right">4 주</div>
+        <div id="kpiQtySub" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-right">매수원금 $192.84</div>
+      </div>
+
+      <!-- 카드 2: 매입평단 -->
+      <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 overflow-hidden">
+        <div class="text-[11px] font-bold text-slate-500 no-wrap">매입평단</div>
+        <div id="kpiAvg" class="text-[15px] font-extrabold text-blue-600 mt-1 tabular-nums no-wrap text-right">$48.21</div>
+        <div id="kpiAvgSub" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-right">원화 약 64,409원</div>
+      </div>
+
+      <!-- 카드 3: 현재가 · 수익률(%) -->
+      <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 overflow-hidden">
+        <div class="text-[11px] font-bold text-slate-500 no-wrap">현재가 · 수익률(%)</div>
+        <div id="kpiEval" class="text-[15px] font-extrabold text-slate-800 mt-1 tabular-nums no-wrap text-right">$48.21 (0.00%)</div>
+        <div id="kpiEvalSub" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-right truncate">손익 $0.00 · 평가 $192.84</div>
+      </div>
+
+      <!-- 카드 4: 잔여 예수금 -->
+      <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 overflow-hidden">
+        <div class="text-[11px] font-bold text-slate-500 no-wrap">잔여 예수금</div>
+        <div id="kpiCash" class="text-[15px] font-extrabold text-slate-900 mt-1 tabular-nums no-wrap text-right">$7,292.19</div>
+        <div id="kpiCashSub" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-right">4주 기준 약 37.8회 여력</div>
+      </div>
+
+      <!-- 카드 5: 실현손익 (하단 보조 설명 없음) -->
+      <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 overflow-hidden">
+        <div class="text-[11px] font-bold text-slate-500 no-wrap">실현손익</div>
+        <div id="kpiRealized" class="text-[15px] font-extrabold text-slate-800 mt-1 tabular-nums no-wrap text-right">$0.00</div>
+      </div>
+    </section>
+
+    <!-- 3. 라오어 1.0 vs 4.0 듀얼 다음 날 주문 계산기 (자전거래 방지 상한 적용) -->
+    <section aria-label="다음 날 주문 계산기" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <!-- Ver 1.0 카드 -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+        <div class="bg-slate-800 text-white px-4 py-3.5 flex items-center justify-between gap-2">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-indigo-500 text-white">Ver 1.0</span>
+              <h3 class="font-bold text-sm">고정 분할 · 단순 익절 전략</h3>
+            </div>
+            <p id="v1Subtitle" class="text-[11px] text-slate-300 mt-1 tabular-nums">1회기준 $187.13 · 금액진행 1.03회차</p>
+          </div>
+          <button type="button" onclick="copyOrders('v1')" class="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-white transition no-wrap cursor-pointer">
+            주문표 복사
+          </button>
+        </div>
+        <div id="v1Body" class="p-4 space-y-3 text-sm flex-1 tabular-nums"></div>
+      </div>
+
+      <!-- Ver 4.0 카드 -->
+      <div class="bg-white rounded-2xl shadow-sm border border-blue-200 overflow-hidden flex flex-col">
+        <div class="bg-blue-900 text-white px-4 py-3.5 flex items-center justify-between gap-2">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-sky-400 text-slate-950">Ver 4.0</span>
+              <h3 class="font-bold text-sm">동적 1회매수금 · 별지점(☆%) 전략</h3>
+            </div>
+            <p id="v4Subtitle" class="text-[11px] text-sky-200 mt-1 tabular-nums">전반전 (T &lt; 20) · 별% +19.00% · 별지점 $57.37</p>
+          </div>
+          <button type="button" onclick="copyOrders('v4')" class="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-white transition no-wrap cursor-pointer">
+            주문표 복사
+          </button>
+        </div>
+        <div id="v4Body" class="p-4 space-y-3 text-sm flex-1 tabular-nums"></div>
+      </div>
+    </section>
+
+    <!-- 4. 일일 매수·매도 체결 결과 입력 폼 -->
+    <section aria-label="일일 체결 결과 입력" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-3.5">
+        <h2 class="text-sm font-extrabold text-slate-800 flex items-center gap-1.5">
+          <span class="w-1.5 h-4 bg-emerald-600 rounded-full"></span>
+          일일 매수 · 매도 체결 결과 입력
+        </h2>
+        <span class="text-xs text-slate-400">체결 후 입력하면 평단가·잔고·다음 날 주문표가 자동 갱신됩니다</span>
+      </div>
+
+      <!-- 3단 반응형 균등 그리드 (날짜 칸 겹침 방지) -->
+      <div class="input-grid">
+        <div class="form-field">
+          <label for="txDate" class="text-xs font-bold text-slate-600 mb-1">거래일자</label>
+          <input id="txDate" type="date" class="form-control tabular-nums" />
+        </div>
+
+        <div class="form-field">
+          <label for="txType" class="text-xs font-bold text-slate-600 mb-1">매매구분</label>
+          <select id="txType" class="form-control font-bold" onchange="updateTxPreview()">
+            <option value="BUY">매수 (LOC / 지정가)</option>
+            <option value="SELL_PART">부분매도 (쿼터 LOC / 리버스)</option>
+            <option value="SELL_ALL">전량익절 (사이클 종료)</option>
+          </select>
+        </div>
+
+        <div class="form-field">
+          <label for="txPrice" class="text-xs font-bold text-slate-600 mb-1">체결단가 ($)</label>
+          <input id="txPrice" type="number" step="0.01" min="0.01" placeholder="예: 47.50" class="form-control font-bold tabular-nums" oninput="updateTxPreview()" />
+        </div>
+
+        <div class="form-field">
+          <label for="txQty" class="text-xs font-bold text-slate-600 mb-1">체결수량 (주)</label>
+          <input id="txQty" type="number" step="1" min="1" placeholder="예: 4" class="form-control font-bold tabular-nums" oninput="updateTxPreview()" />
+        </div>
+
+        <div class="form-field">
+          <label for="txTMode" class="text-xs font-bold text-slate-600 mb-1">4.0 T값 반영 방식</label>
+          <div class="flex gap-1.5">
+            <select id="txTMode" class="form-control font-semibold" onchange="toggleCustomTInput(); updateTxPreview();">
+              <option value="AUTO">자동계산 (목표수량 비율)</option>
+              <option value="CUSTOM">직접입력</option>
+            </select>
+            <input id="txCustomT" type="number" step="0.01" placeholder="+1.0" class="form-control hidden font-extrabold text-blue-600 tabular-nums" style="max-width: 96px;" oninput="updateTxPreview()" />
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label class="text-xs font-bold text-slate-600 mb-1">예상 체결금액 및 T 변동</label>
+          <div id="txPreviewBox" class="h-[44px] px-3 rounded-[10px] bg-slate-50 border border-slate-200 flex items-center justify-between text-xs font-bold text-slate-700 tabular-nums">
+            <span>$0.00</span>
+            <span class="text-blue-600">T +0.00</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 메모 입력 및 반영 버튼 -->
+      <div class="mt-3.5 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+        <input id="txMemo" type="text" placeholder="메모 (예: 전반전 평단 LOC 2주 + 별지점 LOC 2주 전량 체결)" class="form-control flex-1" />
+        <button type="button" onclick="addTransaction()" class="h-[44px] px-6 rounded-[10px] bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-extrabold text-sm shadow-sm transition shrink-0 no-wrap cursor-pointer">
+          + 체결 내역 반영
+        </button>
+      </div>
+    </section>
+
+    <!-- 5. 누적 매매 일지 테이블 -->
+    <section aria-label="누적 매매 일지" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      <div class="px-4 py-3.5 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <h2 class="text-sm font-extrabold text-slate-800">누적 매매 일지</h2>
+          <span id="logCountBadge" class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-slate-100 text-slate-600 tabular-nums">1건</span>
+        </div>
+        <button type="button" onclick="resetToDefault()" class="px-3 py-1.5 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold transition no-wrap cursor-pointer">
+          초기 데이터 복원
+        </button>
+      </div>
+
+      <div class="table-wrap">
+        <table id="journalTable" class="w-full text-xs border-collapse">
+          <thead>
+            <tr class="bg-slate-50 text-slate-600 border-b border-slate-200">
+              <th class="py-3 px-3 font-extrabold text-center no-wrap" style="min-width:144px; width:144px;">No / 날짜</th>
+              <th class="py-3 px-3 font-extrabold text-center no-wrap">구분</th>
+              <th class="py-3 px-3 font-extrabold text-center no-wrap">체결가</th>
+              <th class="py-3 px-3 font-extrabold text-center no-wrap">수량</th>
+              <th class="py-3 px-3 font-extrabold text-center no-wrap">체결금액</th>
+              <th class="py-3 px-3 font-extrabold text-center no-wrap">누적수량</th>
+              <th class="py-3 px-3 font-extrabold text-center no-wrap">매입평단</th>
+              <th class="py-3 px-3 font-extrabold text-center no-wrap">4.0 T값</th>
+              <th class="py-3 px-3 font-extrabold text-center no-wrap">잔여예수금</th>
+              <th class="py-3 px-3 font-extrabold text-center no-wrap">실현손익</th>
+              <th class="py-3 px-3 font-extrabold text-center no-wrap" style="min-width:175px; width:175px;">메모 (클릭 전체보기)</th>
+              <th class="py-3 px-3 font-extrabold text-center no-wrap">삭제</th>
+            </tr>
+          </thead>
+          <tbody id="txTableBody" class="divide-y divide-slate-100 tabular-nums"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- 모달 1: 실시간 시세 API 설정 전용 -->
+  <div id="apiModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4" onclick="if(event.target===this) closeApiModal()">
+    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden" onclick="event.stopPropagation()">
+      <div class="px-5 py-4 bg-slate-900 text-white flex items-center justify-between">
+        <div>
+          <span class="text-[10px] font-extrabold uppercase tracking-wider text-sky-400 block">Live Quote API</span>
+          <h3 class="font-extrabold text-base">실시간 시세 API 설정</h3>
+        </div>
+        <button type="button" onclick="closeApiModal()" class="text-slate-400 hover:text-white text-2xl leading-none px-1 cursor-pointer">&times;</button>
+      </div>
+
+      <div class="p-5 space-y-4">
+        <!-- 3분할 카드 버튼 제공사 선택기 -->
+        <div>
+          <label class="block text-xs font-extrabold text-slate-700 mb-2">데이터 제공사 선택</label>
+          <div class="grid grid-cols-3 gap-2">
+            <button type="button" id="provTwelveBtn" onclick="selectProvider('twelvedata')" class="py-2.5 px-2 rounded-xl border text-xs font-extrabold text-center transition cursor-pointer">
+              Twelve Data<br><span class="text-[10px] font-medium opacity-80">기본 · 무료</span>
+            </button>
+            <button type="button" id="provFinnhubBtn" onclick="selectProvider('finnhub')" class="py-2.5 px-2 rounded-xl border text-xs font-extrabold text-center transition cursor-pointer">
+              Finnhub<br><span class="text-[10px] font-medium opacity-80">무료 플랜</span>
+            </button>
+            <button type="button" id="provNoneBtn" onclick="selectProvider('none')" class="py-2.5 px-2 rounded-xl border text-xs font-extrabold text-center transition cursor-pointer">
+              사용 안 함<br><span class="text-[10px] font-medium opacity-80">수동 입력</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- API Key 입력 영역 -->
+        <div id="apiKeyInputSection" class="space-y-2 transition-opacity">
+          <div class="flex items-center justify-between">
+            <label for="apiKeyInput" class="text-xs font-extrabold text-slate-700">개인 API Key 입력</label>
+            <a id="apiHelpLink" href="https://twelvedata.com/pricing" target="_blank" rel="noopener noreferrer" class="text-[11px] text-blue-600 hover:underline font-bold">무료 키 발급받기 ↗</a>
+          </div>
+          <div class="flex gap-2">
+            <input id="apiKeyInput" type="password" autocomplete="off" placeholder="Twelve Data API Key 입력" class="form-control flex-1 font-mono text-xs" />
+            <button type="button" id="toggleKeyBtn" onclick="toggleApiKeyVisibility()" class="px-3 h-[44px] rounded-[10px] border border-slate-300 bg-slate-50 hover:bg-slate-100 text-xs font-bold text-slate-700 shrink-0 cursor-pointer">
+              표시
+            </button>
+          </div>
+          <p id="apiProviderDesc" class="text-[11px] text-slate-500 leading-relaxed">Twelve Data 무료 키는 일 800회 호출 및 미국 ETF/주식 실시간 시세와 USD/KRW 환율을 지원합니다.</p>
+        </div>
+
+        <!-- 연결 테스트 인라인 결과 -->
+        <div id="apiTestResult" class="hidden rounded-xl p-3 text-xs font-bold"></div>
+
+        <!-- 하단 버튼 -->
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+          <button type="button" onclick="testApiConnection()" class="px-4 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-xs font-extrabold text-slate-700 transition cursor-pointer">
+            연결 테스트
+          </button>
+          <button type="button" onclick="saveApiSettings()" class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold shadow-sm transition cursor-pointer">
+            API 설정 저장
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 모달 2: 매매 메모 전체보기 및 수정 -->
+  <div id="memoModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4" onclick="if(event.target===this) closeMemoModal()">
+    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden" onclick="event.stopPropagation()">
+      <div class="px-5 py-3.5 bg-slate-800 text-white flex items-center justify-between">
+        <h3 class="font-extrabold text-sm">매매 메모 전체보기 · 수정</h3>
+        <button type="button" onclick="closeMemoModal()" class="text-slate-400 hover:text-white text-2xl leading-none px-1 cursor-pointer">&times;</button>
+      </div>
+      <div class="p-5 space-y-3">
+        <div id="memoTxMeta" class="text-xs font-bold text-slate-600 bg-slate-50 px-3 py-2 rounded-xl border border-slate-200 tabular-nums"></div>
+        <textarea id="memoModalTextarea" rows="5" placeholder="거래 당시 상황이나 주문 메모를 입력하세요." class="w-full p-3 rounded-xl border border-slate-300 text-sm text-slate-800 outline-none focus:border-blue-600" style="white-space: pre-wrap; word-break: break-word;"></textarea>
+        <div class="flex justify-end gap-2">
+          <button type="button" onclick="closeMemoModal()" class="px-4 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer">닫기</button>
+          <button type="button" onclick="saveMemoEdit()" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold cursor-pointer">메모 저장</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 하단 토스트 알림 -->
+  <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg opacity-0 pointer-events-none transition-opacity z-50 no-wrap"></div>
+
+  <script>
+    /**
+     * 샌드박스 / iPad Safari 보안 제한 대비 안전 저장소
+     */
+    const memoryStore = {};
+    const safeStorage = {
+      getItem(k) {
+        try {
+          return window.localStorage.getItem(k);
+        } catch (e) {
+          return Object.prototype.hasOwnProperty.call(memoryStore, k) ? memoryStore[k] : null;
+        }
+      },
+      setItem(k, v) {
+        memoryStore[k] = v;
+        try {
+          window.localStorage.setItem(k, v);
+        } catch (e) {}
+      }
+    };
+
+    const STORAGE_KEY = 'laor_infinite_buy_state_v8';
+
+    const DEFAULT_STATE = {
+      config: {
+        ticker: 'SOXL',
+        krwCapital: 10000000,
+        exchangeRate: 1336,
+        usdCapital: 7485.03,
+        splits: 40,
+        orderMode: 'fixed', // 'fixed' | 'amount'
+        targetQty: 4,
+        currentPrice: 48.21
+      },
+      api: {
+        provider: 'twelvedata', // 'twelvedata' | 'finnhub' | 'none'
+        key: '1b21ff07c1d744388afedc6c1f5ec87c'
+      },
+      transactions: [
+        {
+          id: 'tx_init_1',
+          date: '2026-11-17',
+          type: 'BUY',
+          price: 48.21,
+          qty: 4,
+          tMode: 'AUTO',
+          customT: 1.0,
+          memo: '무한매수법 1일차 시작 (4주 @ $48.21 매수 체결 완료 - 1.0 & 4.0 동시 추적)'
+        }
+      ]
+    };
+
+    let state = loadState();
+    let editingMemoTxId = null;
+    let selectedModalProvider = state.api.provider || 'twelvedata';
+
+    function loadState() {
+      try {
+        const raw = safeStorage.getItem(STORAGE_KEY);
+        if (!raw) return JSON.parse(JSON.stringify(DEFAULT_STATE));
+        const parsed = JSON.parse(raw);
+        return {
+          config: { ...DEFAULT_STATE.config, ...(parsed.config || {}) },
+          api: {
+            provider: (parsed.api && parsed.api.provider) ? parsed.api.provider : DEFAULT_STATE.api.provider,
+            key: (parsed.api && parsed.api.key) ? parsed.api.key : DEFAULT_STATE.api.key
+          },
+          transactions: Array.isArray(parsed.transactions)
+            ? parsed.transactions
+            : JSON.parse(JSON.stringify(DEFAULT_STATE.transactions))
+        };
+      } catch (e) {
+        return JSON.parse(JSON.stringify(DEFAULT_STATE));
+      }
+    }
+
+    function saveState() {
+      safeStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function showToast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.remove('opacity-0');
+      clearTimeout(el._timer);
+      el._timer = setTimeout(() => el.classList.add('opacity-0'), 2400);
+    }
+
+    function fmtUsd(val) {
+      const num = Number(val) || 0;
+      const sign = num < 0 ? '-' : '';
+      return sign + '$' + Math.abs(num).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function fmtKrw(val) {
+      return Math.round(Number(val) || 0).toLocaleString('ko-KR') + '원';
+    }
+
+    function formatKrwInput(el) {
+      const digits = String(el.value).replace(/[^\d]/g, '');
+      el.value = digits ? Number(digits).toLocaleString('ko-KR') : '';
+    }
+
+    function formatDecimalCommaInput(el) {
+      let cleaned = String(el.value).replace(/[^0-9.]/g, '');
+      const parts = cleaned.split('.');
+      if (parts.length > 2) {
+        cleaned = parts[0] + '.' + parts.slice(1).join('');
+      }
+      const [intPart, decPart] = cleaned.split('.');
+      const formattedInt = intPart ? Number(intPart).toLocaleString('en-US') : '';
+      el.value = decPart !== undefined ? `${formattedInt}.${decPart}` : formattedInt;
+    }
+
+    function formatDecimalNumber(num, maxDec = 2) {
+      const n = Number(num) || 0;
+      return n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: maxDec });
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    /**
+     * 자전거래(통정매매) 의심 주문 거절 방지 헬퍼:
+     * 매수 주문 단가가 최저 매도 주문 단가 이상인 경우 (최저 매도가 - $0.01)로 상한 제한
+     */
+    function capBuyPrice(rawBuyPrice, minSellPrice) {
+      const buy = Number((Number(rawBuyPrice) || 0).toFixed(2));
+      if (typeof minSellPrice !== 'number' || isNaN(minSellPrice) || minSellPrice <= 0) {
+        return { price: buy, capped: false };
+      }
+      const sell = Number(minSellPrice.toFixed(2));
+      if (buy >= sell) {
+        return {
+          price: Number(Math.max(0.01, sell - 0.01).toFixed(2)),
+          capped: true
+        };
+      }
+      return { price: buy, capped: false };
+    }
+
+    function renderCapBadge(isCapped) {
+      if (!isCapped) return '';
+      return `<span class="ml-1.5 px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300 text-[10px] font-extrabold no-wrap" title="매수가가 매도가 이상이면 자전거래 의심으로 거절되므로 최저 매도가 - $0.01로 자동 제한되었습니다">자전방지 상한적용</span>`;
+    }
+
+    // 전체 거래 내역 기반 포트폴리오 계산
+    function computePortfolio() {
+      const cfg = state.config;
+      let totalQty = 0;
+      let totalCost = 0;
+      let cash = Number(cfg.usdCapital) || 0;
+      let realizedPnL = 0;
+      let tValue = 0;
+      let cumulativeBuyAmount = 0;
+
+      const rows = state.transactions.map((tx, idx) => {
+        const price = Number(tx.price) || 0;
+        const qty = Number(tx.qty) || 0;
+        const amount = price * qty;
+        const avgBefore = totalQty > 0 ? totalCost / totalQty : 0;
+        let tDelta = 0;
+
+        if (tx.type === 'BUY') {
+          totalCost += amount;
+          totalQty += qty;
+          cash -= amount;
+          cumulativeBuyAmount += amount;
+
+          if (tx.tMode === 'CUSTOM') {
+            tDelta = Number(tx.customT) || 0;
+          } else {
+            const baseQty = Math.max(1, Number(cfg.targetQty) || 4);
+            tDelta = Number((qty / baseQty).toFixed(2));
+          }
+          tValue = Math.max(0, Number((tValue + tDelta).toFixed(2)));
+        } else if (tx.type === 'SELL_PART') {
+          const sellQty = Math.min(totalQty, qty);
+          const pnl = (price - avgBefore) * sellQty;
+          realizedPnL += pnl;
+          totalCost = Math.max(0, totalCost - avgBefore * sellQty);
+          totalQty -= sellQty;
+          cash += price * sellQty;
+
+          if (tx.tMode === 'CUSTOM') {
+            tValue = Math.max(0, Number((tValue + (Number(tx.customT) || 0)).toFixed(2)));
+          } else {
+            tValue = Math.max(0, Number((tValue * 0.75).toFixed(2)));
+          }
+        } else if (tx.type === 'SELL_ALL') {
+          const sellQty = totalQty > 0 ? totalQty : qty;
+          const pnl = (price - avgBefore) * sellQty;
+          realizedPnL += pnl;
+          totalCost = 0;
+          totalQty = 0;
+          cash += price * sellQty;
+          tValue = 0;
+          cumulativeBuyAmount = 0;
+        }
+
+        const avgAfter = totalQty > 0 ? totalCost / totalQty : 0;
+
+        return {
+          ...tx,
+          index: idx + 1,
+          amount,
+          cumQty: totalQty,
+          avgAfter,
+          tAfter: tValue,
+          cashAfter: cash,
+          realizedAfter: realizedPnL
+        };
+      });
+
+      const avgPrice = totalQty > 0 ? totalCost / totalQty : 0;
+      return {
+        totalQty,
+        totalCost,
+        avgPrice,
+        cash,
+        realizedPnL,
+        tValue,
+        cumulativeBuyAmount,
+        rows
+      };
+    }
+
+    /**
+     * Ver 1.0 & Ver 4.0 다음 날 주문 계산 (자전거래 방지 상한 capBuyPrice 공통 사용)
+     */
+    function calculateOrdersData(p) {
+      const cfg = state.config;
+      const splits = Math.max(10, Number(cfg.splits) || 40);
+      const baseAvg = p.avgPrice > 0 ? p.avgPrice : (Number(cfg.currentPrice) || 48.21);
+      const targetQty = Math.max(1, Number(cfg.targetQty) || 4);
+
+      // --- Ver 1.0 산출 ---
+      const v1UnitBudget = cfg.usdCapital / splits;
+      const v1Round = v1UnitBudget > 0 ? (p.cumulativeBuyAmount / v1UnitBudget) : 0;
+      const v1HalfQty = Math.floor(targetQty / 2);
+      const v1BigQty = targetQty - v1HalfQty;
+      const v1AmtHalfQty = baseAvg > 0 ? Math.floor((v1UnitBudget * 0.5) / baseAvg) : 0;
+
+      const v1SellPrice10 = Number((baseAvg * 1.10).toFixed(2));
+      const v1SellPrice12 = Number((baseAvg * 1.12).toFixed(2));
+      // 보유 수량이 있을 경우 최저 매도가(+10% 기본 익절가) 미만으로 매수 상한 제한
+      const v1MinSell = p.totalQty > 0 ? v1SellPrice10 : null;
+
+      const v1AvgBuy = capBuyPrice(baseAvg, v1MinSell);
+      const v1BigBuy = capBuyPrice(baseAvg * 1.15, v1MinSell);
+
+      // --- Ver 4.0 산출 ---
+      const remSplits = Math.max(1, splits - p.tValue);
+      const v4UnitBudget = p.cash / remSplits;
+      const starPct = (splits / 2 - p.tValue) * (40 / splits);
+      const starPrice = Number((baseAvg * (1 + starPct / 100)).toFixed(2));
+      const rawStarBuy = Number(Math.max(0.01, starPrice - 0.01).toFixed(2));
+      const sell20Price = Number((baseAvg * 1.20).toFixed(2));
+      const quarterQty = Math.floor(p.totalQty / 4);
+      const restQty = p.totalQty - quarterQty;
+
+      // 보유 수량이 있을 경우 Ver 4.0 최저 매도가(별지점 LOC 매도 vs +20% 익절 중 낮은 값)
+      const v4MinSell = p.totalQty > 0 ? Math.min(starPrice, sell20Price) : null;
+
+      const v4AvgBuy = capBuyPrice(baseAvg, v4MinSell);
+      const v4StarBuy = capBuyPrice(rawStarBuy, v4MinSell);
+
+      const amtHalfQty = v4AvgBuy.price > 0 ? Math.floor((v4UnitBudget * 0.5) / v4AvgBuy.price) : 0;
+      const amtStarHalfQty = v4StarBuy.price > 0 ? Math.floor((v4UnitBudget * 0.5) / v4StarBuy.price) : 0;
+      const amtStarFullQty = v4StarBuy.price > 0 ? Math.floor(v4UnitBudget / v4StarBuy.price) : 0;
+
+      const revSellQty = Math.max(1, Math.floor(p.totalQty / 20));
+      const revBuyBudget = p.cash / 4;
+      const revBuyQty = v4StarBuy.price > 0 ? Math.floor(revBuyBudget / v4StarBuy.price) : 0;
+
+      return {
+        splits,
+        baseAvg,
+        targetQty,
+        v1: {
+          unitBudget: v1UnitBudget,
+          round: v1Round,
+          halfQty: v1HalfQty,
+          bigQty: v1BigQty,
+          amtHalfQty: v1AmtHalfQty,
+          avgBuy: v1AvgBuy,
+          bigBuy: v1BigBuy,
+          sell10: v1SellPrice10,
+          sell12: v1SellPrice12
+        },
+        v4: {
+          unitBudget: v4UnitBudget,
+          starPct,
+          starPrice,
+          avgBuy: v4AvgBuy,
+          starBuy: v4StarBuy,
+          sell20: sell20Price,
+          quarterQty,
+          restQty,
+          amtHalfQty,
+          amtStarHalfQty,
+          amtStarFullQty,
+          revSellQty,
+          revBuyQty
+        }
+      };
+    }
+
+    function renderAll() {
+      const cfg = state.config;
+      const p = computePortfolio();
+
+      // 1. 기초 설정 입력값 동기화
+      document.getElementById('cfgTicker').value = cfg.ticker;
+      document.getElementById('cfgKrw').value = Math.round(Number(cfg.krwCapital) || 0).toLocaleString('ko-KR');
+      document.getElementById('cfgRate').value = formatDecimalNumber(cfg.exchangeRate, 2);
+      document.getElementById('cfgUsd').value = Number(cfg.usdCapital).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById('cfgSplits').value = cfg.splits;
+      document.getElementById('currentPriceInput').value = Number(cfg.currentPrice).toFixed(2);
+
+      // 수량/금액 모드 버튼
+      const fixedBtn = document.getElementById('modeFixedBtn');
+      const amountBtn = document.getElementById('modeAmountBtn');
+      const stepper = document.getElementById('fixedQtyStepper');
+      if (cfg.orderMode === 'fixed') {
+        fixedBtn.className = 'px-3 py-1 rounded-lg font-bold bg-white text-blue-600 shadow-xs transition no-wrap cursor-pointer';
+        amountBtn.className = 'px-3 py-1 rounded-lg font-medium text-slate-600 hover:text-slate-900 transition no-wrap cursor-pointer';
+        stepper.classList.remove('opacity-50');
+      } else {
+        amountBtn.className = 'px-3 py-1 rounded-lg font-bold bg-white text-blue-600 shadow-xs transition no-wrap cursor-pointer';
+        fixedBtn.className = 'px-3 py-1 rounded-lg font-medium text-slate-600 hover:text-slate-900 transition no-wrap cursor-pointer';
+        stepper.classList.add('opacity-50');
+      }
+      document.getElementById('targetQtyDisplay').textContent = cfg.targetQty + '주';
+
+      // KPI 5개 업데이트
+      document.getElementById('kpiQty').textContent = `${p.totalQty.toLocaleString()} 주`;
+      document.getElementById('kpiQtySub').textContent = `매수원금 ${fmtUsd(p.totalCost)}`;
+
+      document.getElementById('kpiAvg').textContent = fmtUsd(p.avgPrice);
+      document.getElementById('kpiAvgSub').textContent = `원화 약 ${fmtKrw(p.avgPrice * cfg.exchangeRate)}`;
+
+      const curPrice = Number(cfg.currentPrice) || 0;
+      const evalValue = curPrice * p.totalQty;
+      const evalPnL = p.totalQty > 0 ? (curPrice - p.avgPrice) * p.totalQty : 0;
+      const evalPct = p.avgPrice > 0 && p.totalQty > 0 ? ((curPrice - p.avgPrice) / p.avgPrice) * 100 : 0;
+      const evalEl = document.getElementById('kpiEval');
+      const signPct = evalPct > 0 ? '+' : '';
+      const signUsd = evalPnL > 0 ? '+' : '';
+      evalEl.textContent = `${fmtUsd(curPrice)} (${signPct}${evalPct.toFixed(2)}%)`;
+      evalEl.className = `text-[15px] font-extrabold mt-1 tabular-nums no-wrap text-right ${evalPnL > 0 ? 'text-emerald-600' : evalPnL < 0 ? 'text-rose-600' : 'text-slate-800'}`;
+      document.getElementById('kpiEvalSub').textContent = `손익 ${signUsd}${fmtUsd(evalPnL)} · 평가 ${fmtUsd(evalValue)}`;
+
+      const estUnitCost = p.avgPrice > 0 ? p.avgPrice * cfg.targetQty : (cfg.usdCapital / cfg.splits);
+      const remRounds = estUnitCost > 0 ? (p.cash / estUnitCost).toFixed(1) : '0.0';
+      document.getElementById('kpiCash').textContent = fmtUsd(p.cash);
+      document.getElementById('kpiCashSub').textContent = `${cfg.targetQty}주 기준 약 ${remRounds}회 여력`;
+
+      const realEl = document.getElementById('kpiRealized');
+      const rSign = p.realizedPnL > 0 ? '+' : '';
+      realEl.textContent = `${rSign}${fmtUsd(p.realizedPnL)}`;
+      realEl.className = `text-[15px] font-extrabold mt-1 tabular-nums no-wrap text-right ${p.realizedPnL > 0 ? 'text-emerald-600' : p.realizedPnL < 0 ? 'text-rose-600' : 'text-slate-800'}`;
+
+      // 주문표 렌더링
+      renderOrderCards(p);
+
+      // 매매일지 렌더링
+      renderTable(p.rows);
+
+      // API 상태 배지 업데이트
+      updateApiBadge();
+    }
+
+    function renderOrderCards(p) {
+      const cfg = state.config;
+      const calc = calculateOrdersData(p);
+      const v1 = calc.v1;
+      const v4 = calc.v4;
+
+      // --- 1.0 렌더링 ---
+      document.getElementById('v1Subtitle').textContent = `1회기준 ${fmtUsd(v1.unitBudget)} · 금액진행 ${v1.round.toFixed(2)}회차`;
+
+      let v1Html = '';
+      if (p.totalQty === 0) {
+        v1Html = `<div class="p-4 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 text-xs">현재 보유 수량이 0주입니다. 새로운 사이클 1일차 매수를 진행해 주세요.</div>`;
+      } else if (v1.round >= calc.splits) {
+        const qSell = Math.max(1, Math.floor(p.totalQty / 4));
+        v1Html = `
+          <div class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold">
+            40회차 시드 소진 구간: 보유 수량의 1/4 (${qSell}주) MOC/시장가 손절 후 예수금을 확보합니다.
+          </div>
+        `;
+      } else {
+        const buyRows = cfg.orderMode === 'fixed' ? `
+          <div class="flex items-center justify-between gap-2 py-1.5 border-b border-slate-100">
+            <span class="text-slate-600">① 평단 LOC 매수 (50%)${renderCapBadge(v1.avgBuy.capped)}</span>
+            <span class="font-bold text-blue-700 no-wrap">${fmtUsd(v1.avgBuy.price)} × ${v1.halfQty}주</span>
+          </div>
+          <div class="flex items-center justify-between gap-2 py-1.5">
+            <span class="text-slate-600">② 큰수 LOC 매수 (+15%)${renderCapBadge(v1.bigBuy.capped)}</span>
+            <span class="font-bold text-blue-700 no-wrap">${fmtUsd(v1.bigBuy.price)} × ${v1.bigQty}주</span>
+          </div>
+        ` : `
+          <div class="flex items-center justify-between gap-2 py-1.5 border-b border-slate-100">
+            <span class="text-slate-600">① 평단 LOC 매수 (${fmtUsd(v1.unitBudget * 0.5)})${renderCapBadge(v1.avgBuy.capped)}</span>
+            <span class="font-bold text-blue-700 no-wrap">${fmtUsd(v1.avgBuy.price)} × ${v1.amtHalfQty}주</span>
+          </div>
+          <div class="flex items-center justify-between gap-2 py-1.5">
+            <span class="text-slate-600">② 큰수 LOC 매수 (${fmtUsd(v1.unitBudget * 0.5)})${renderCapBadge(v1.bigBuy.capped)}</span>
+            <span class="font-bold text-blue-700 no-wrap">${fmtUsd(v1.bigBuy.price)} × ${v1.amtHalfQty}주</span>
+          </div>
+        `;
+
+        v1Html = `
+          <div class="rounded-xl bg-blue-50/70 border border-blue-100 p-3">
+            <div class="text-xs font-bold text-blue-900 mb-1.5">매수 주문 (장마감 LOC)</div>
+            ${buyRows}
+          </div>
+          <div class="rounded-xl bg-emerald-50/70 border border-emerald-100 p-3">
+            <div class="text-xs font-bold text-emerald-900 mb-1.5">매도 주문 (전량 지정가 익절)</div>
+            <div class="flex items-center justify-between gap-2 py-1.5 border-b border-emerald-100/70">
+              <span class="text-slate-600">기본 익절 (+10%)</span>
+              <span class="font-bold text-emerald-700 no-wrap">${fmtUsd(v1.sell10)} × ${p.totalQty}주</span>
+            </div>
+            <div class="flex items-center justify-between gap-2 py-1.5">
+              <span class="text-slate-600">SOXL 권장 익절 (+12%)</span>
+              <span class="font-bold text-emerald-700 no-wrap">${fmtUsd(v1.sell12)} × ${p.totalQty}주</span>
+            </div>
+          </div>
+        `;
+      }
+      document.getElementById('v1Body').innerHTML = v1Html;
+
+      // --- 4.0 렌더링 ---
+      let phaseLabel = '전반전 (T < 20)';
+      if (p.tValue > calc.splits - 1) phaseLabel = '리버스 모드 (T > 39)';
+      else if (p.tValue >= calc.splits / 2) phaseLabel = '후반전 (20 ≤ T ≤ 39)';
+
+      const starSign = v4.starPct >= 0 ? '+' : '';
+      document.getElementById('v4Subtitle').textContent = `${phaseLabel} · 별% ${starSign}${v4.starPct.toFixed(2)}% · 별지점 ${fmtUsd(v4.starPrice)}`;
+
+      let v4Html = '';
+      if (p.totalQty === 0) {
+        v4Html = `<div class="p-4 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 text-xs">현재 보유 수량이 0주입니다. 새로운 사이클 1일차 매수를 진행해 주세요.</div>`;
+      } else if (p.tValue > calc.splits - 1) {
+        v4Html = `
+          <div class="rounded-xl bg-amber-50 border border-amber-200 p-3 space-y-2 text-xs">
+            <div class="font-bold text-amber-900">리버스 모드 가동 (T = ${p.tValue.toFixed(2)})</div>
+            <div class="flex justify-between gap-2"><span>① 첫날 MOC 매도 (보유량 1/20)</span><span class="font-bold text-rose-700 no-wrap">시장가(MOC) × ${v4.revSellQty}주</span></div>
+            <div class="flex justify-between gap-2"><span>② 익일부터 별지점 LOC 매수 (잔금 1/4)${renderCapBadge(v4.starBuy.capped)}</span><span class="font-bold text-blue-700 no-wrap">${fmtUsd(v4.starBuy.price)} × ${v4.revBuyQty}주</span></div>
+            <div class="flex justify-between gap-2"><span>③ 매도 주문 (보유량 1/4 별지점 LOC)</span><span class="font-bold text-emerald-700 no-wrap">${fmtUsd(v4.starPrice)} × ${v4.quarterQty}주</span></div>
+          </div>
+        `;
+      } else {
+        const isFirstHalf = p.tValue < (calc.splits / 2);
+        const halfQty = Math.floor(calc.targetQty / 2);
+        const otherHalfQty = calc.targetQty - halfQty;
+
+        let buySection = '';
+        if (isFirstHalf) {
+          if (cfg.orderMode === 'fixed') {
+            buySection = `
+              <div class="flex items-center justify-between gap-2 py-1.5 border-b border-blue-100">
+                <span class="text-slate-600">① 평단 LOC 매수 (50%)${renderCapBadge(v4.avgBuy.capped)}</span>
+                <span class="font-bold text-blue-700 no-wrap">${fmtUsd(v4.avgBuy.price)} × ${halfQty}주</span>
+              </div>
+              <div class="flex items-center justify-between gap-2 py-1.5">
+                <span class="text-slate-600">② 별지점-$0.01 LOC 매수 (50%)${renderCapBadge(v4.starBuy.capped)}</span>
+                <span class="font-bold text-blue-700 no-wrap">${fmtUsd(v4.starBuy.price)} × ${otherHalfQty}주</span>
+              </div>
+            `;
+          } else {
+            buySection = `
+              <div class="flex items-center justify-between gap-2 py-1.5 border-b border-blue-100">
+                <span class="text-slate-600">① 평단 LOC 매수 (${fmtUsd(v4.unitBudget * 0.5)})${renderCapBadge(v4.avgBuy.capped)}</span>
+                <span class="font-bold text-blue-700 no-wrap">${fmtUsd(v4.avgBuy.price)} × ${v4.amtHalfQty}주</span>
+              </div>
+              <div class="flex items-center justify-between gap-2 py-1.5">
+                <span class="text-slate-600">② 별지점-$0.01 LOC 매수 (${fmtUsd(v4.unitBudget * 0.5)})${renderCapBadge(v4.starBuy.capped)}</span>
+                <span class="font-bold text-blue-700 no-wrap">${fmtUsd(v4.starBuy.price)} × ${v4.amtStarHalfQty}주</span>
+              </div>
+            `;
+          }
+        } else {
+          const fullQty = cfg.orderMode === 'fixed' ? calc.targetQty : v4.amtStarFullQty;
+          buySection = `
+            <div class="flex items-center justify-between gap-2 py-1.5">
+              <span class="text-slate-600">후반전 100% 별지점-$0.01 LOC${renderCapBadge(v4.starBuy.capped)}</span>
+              <span class="font-bold text-blue-700 no-wrap">${fmtUsd(v4.starBuy.price)} × ${fullQty}주</span>
+            </div>
+          `;
+        }
+
+        v4Html = `
+          <div class="rounded-xl bg-blue-50/70 border border-blue-100 p-3">
+            <div class="text-xs font-bold text-blue-900 mb-1.5">매수 주문 (동적 1회매수금 ${fmtUsd(v4.unitBudget)})</div>
+            ${buySection}
+          </div>
+          <div class="rounded-xl bg-emerald-50/70 border border-emerald-100 p-3">
+            <div class="text-xs font-bold text-emerald-900 mb-1.5">매도 주문 (쿼터 별지점 + 잔여 +20%)</div>
+            <div class="flex items-center justify-between gap-2 py-1.5 border-b border-emerald-100/70">
+              <span class="text-slate-600">① 보유 1/4 별지점 LOC 매도</span>
+              <span class="font-bold text-emerald-700 no-wrap">${fmtUsd(v4.starPrice)} × ${v4.quarterQty}주</span>
+            </div>
+            <div class="flex items-center justify-between gap-2 py-1.5">
+              <span class="text-slate-600">② 보유 3/4 지정가 익절 (+20%)</span>
+              <span class="font-bold text-emerald-700 no-wrap">${fmtUsd(v4.sell20)} × ${v4.restQty}주</span>
+            </div>
+          </div>
+        `;
+      }
+      document.getElementById('v4Body').innerHTML = v4Html;
+    }
+
+    function renderTable(rows) {
+      const tbody = document.getElementById('txTableBody');
+      document.getElementById('logCountBadge').textContent = `${rows.length}건`;
+
+      if (rows.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="12" class="py-8 text-center text-slate-400">기록된 매매 내역이 없습니다.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = rows.map(r => {
+        let badge = `<span class="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 font-bold no-wrap">매수</span>`;
+        if (r.type === 'SELL_PART') badge = `<span class="px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 font-bold no-wrap">부분매도</span>`;
+        if (r.type === 'SELL_ALL') badge = `<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-bold no-wrap">전량익절</span>`;
+
+        const memoText = r.memo && r.memo.trim() ? r.memo.trim() : '-';
+        const rSign = r.realizedAfter > 0 ? '+' : '';
+        const rColor = r.realizedAfter > 0 ? 'text-emerald-600' : r.realizedAfter < 0 ? 'text-rose-600' : 'text-slate-500';
+
+        return `
+          <tr class="hover:bg-slate-50/80 transition">
+            <td class="py-2.5 px-3 text-center font-medium text-slate-700 no-wrap" style="min-width:144px; width:144px;">
+              <span class="text-slate-400 font-bold mr-1">#${r.index}</span>${r.date}
+            </td>
+            <td class="py-2.5 px-3 text-center no-wrap">${badge}</td>
+            <td class="py-2.5 px-3 text-right font-semibold text-slate-800 no-wrap">${fmtUsd(r.price)}</td>
+            <td class="py-2.5 px-3 text-right font-semibold text-slate-800 no-wrap">${r.qty}주</td>
+            <td class="py-2.5 px-3 text-right font-medium text-slate-600 no-wrap">${fmtUsd(r.amount)}</td>
+            <td class="py-2.5 px-3 text-right font-bold text-slate-900 no-wrap">${r.cumQty}주</td>
+            <td class="py-2.5 px-3 text-right font-bold text-blue-600 no-wrap">${fmtUsd(r.avgAfter)}</td>
+            <td class="py-2.5 px-3 text-center font-bold text-indigo-600 no-wrap">${r.tAfter.toFixed(2)}</td>
+            <td class="py-2.5 px-3 text-right font-medium text-slate-700 no-wrap">${fmtUsd(r.cashAfter)}</td>
+            <td class="py-2.5 px-3 text-right font-bold ${rColor} no-wrap">${rSign}${fmtUsd(r.realizedAfter)}</td>
+            <td class="py-2.5 px-3 text-left" style="max-width:175px; width:175px;">
+              <button type="button" onclick="openMemoModal('${r.id}')" title="클릭하여 메모 전체보기" class="w-full text-left truncate text-slate-600 hover:text-blue-600 hover:underline block cursor-pointer">
+                ${escapeHtml(memoText)}
+              </button>
+            </td>
+            <td class="py-2.5 px-3 text-center no-wrap">
+              <button type="button" onclick="deleteTransaction('${r.id}')" class="px-2 py-1 rounded text-rose-500 hover:bg-rose-50 font-bold cursor-pointer">삭제</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // 기초 운용 설정 인라인 수정 핸들러
+    function updateBasicConfig(changedField) {
+      const ticker = document.getElementById('cfgTicker').value.trim().toUpperCase() || 'SOXL';
+      const rawKrw = String(document.getElementById('cfgKrw').value).replace(/[^\d]/g, '');
+      const rawRate = String(document.getElementById('cfgRate').value).replace(/,/g, '');
+      const rawUsd = String(document.getElementById('cfgUsd').value).replace(/,/g, '');
+      let krw = parseFloat(rawKrw) || 0;
+      let rate = parseFloat(rawRate) || 1336;
+      let usd = parseFloat(rawUsd) || 0;
+      const splits = Math.max(10, parseInt(document.getElementById('cfgSplits').value, 10) || 40);
+
+      if (changedField === 'krw' || changedField === 'rate') {
+        usd = rate > 0 ? Number((krw / rate).toFixed(2)) : 0;
+      } else if (changedField === 'usd') {
+        krw = Math.round(usd * rate);
+      }
+
+      state.config.ticker = ticker;
+      state.config.krwCapital = krw;
+      state.config.exchangeRate = rate;
+      state.config.usdCapital = usd;
+      state.config.splits = splits;
+      saveState();
+      renderAll();
+
+      if (changedField === 'ticker' && state.api.provider !== 'none' && state.api.key) {
+        fetchLivePrice(false);
+      }
+    }
+
+    function setOrderMode(mode) {
+      state.config.orderMode = mode;
+      saveState();
+      renderAll();
+    }
+
+    function changeTargetQty(delta) {
+      state.config.targetQty = Math.max(1, (Number(state.config.targetQty) || 4) + delta);
+      saveState();
+      renderAll();
+      updateTxPreview();
+    }
+
+    function applyCurrentPrice() {
+      const inputEl = document.getElementById('currentPriceInput');
+      const raw = String(inputEl.value).replace(/,/g, '').trim();
+
+      if (!raw) {
+        fetchLivePrice(true);
+        return;
+      }
+
+      const num = parseFloat(raw);
+      if (isNaN(num) || num < 0) {
+        showToast('올바른 현재가 숫자를 입력해 주세요.');
+        return;
+      }
+
+      state.config.currentPrice = Number(num.toFixed(2));
+      saveState();
+      renderAll();
+      showToast(`${state.config.ticker} 현재가 ${fmtUsd(state.config.currentPrice)} 반영 완료`);
+    }
+
+    // 일일 체결 폼 제어
+    function toggleCustomTInput() {
+      const mode = document.getElementById('txTMode').value;
+      const customInput = document.getElementById('txCustomT');
+      if (mode === 'CUSTOM') customInput.classList.remove('hidden');
+      else customInput.classList.add('hidden');
+    }
+
+    function updateTxPreview() {
+      const type = document.getElementById('txType').value;
+      const price = parseFloat(document.getElementById('txPrice').value) || 0;
+      const qty = parseInt(document.getElementById('txQty').value, 10) || 0;
+      const tMode = document.getElementById('txTMode').value;
+      const customT = parseFloat(document.getElementById('txCustomT').value) || 0;
+      const amount = price * qty;
+
+      let tText = 'T +0.00';
+      if (type === 'BUY') {
+        const delta = tMode === 'CUSTOM' ? customT : (qty / Math.max(1, state.config.targetQty));
+        tText = `T ${delta >= 0 ? '+' : ''}${delta.toFixed(2)}`;
+      } else if (type === 'SELL_PART') {
+        tText = tMode === 'CUSTOM' ? `T ${customT >= 0 ? '+' : ''}${customT.toFixed(2)}` : 'T × 0.75 (쿼터)';
+      } else if (type === 'SELL_ALL') {
+        tText = 'T → 0.00 (리셋)';
+      }
+
+      document.getElementById('txPreviewBox').innerHTML = `
+        <span>${fmtUsd(amount)}</span>
+        <span class="text-blue-600">${tText}</span>
+      `;
+    }
+
+    function addTransaction() {
+      const date = document.getElementById('txDate').value || new Date().toISOString().slice(0, 10);
+      const type = document.getElementById('txType').value;
+      const price = parseFloat(document.getElementById('txPrice').value);
+      const qty = parseInt(document.getElementById('txQty').value, 10);
+      const tMode = document.getElementById('txTMode').value;
+      const customT = parseFloat(document.getElementById('txCustomT').value) || 0;
+      const memo = document.getElementById('txMemo').value.trim();
+
+      if (isNaN(price) || price <= 0) {
+        showToast('체결단가를 올바르게 입력해 주세요.');
+        return;
+      }
+      if (isNaN(qty) || qty <= 0) {
+        showToast('체결수량을 1주 이상 입력해 주세요.');
+        return;
+      }
+
+      state.transactions.push({
+        id: 'tx_' + Date.now(),
+        date,
+        type,
+        price,
+        qty,
+        tMode,
+        customT,
+        memo
+      });
+
+      state.config.currentPrice = price;
+
+      saveState();
+      renderAll();
+
+      document.getElementById('txPrice').value = '';
+      document.getElementById('txQty').value = '';
+      document.getElementById('txMemo').value = '';
+      updateTxPreview();
+      showToast('체결 내역이 반영되었습니다.');
+    }
+
+    function deleteTransaction(id) {
+      state.transactions = state.transactions.filter(t => t.id !== id);
+      saveState();
+      renderAll();
+      showToast('체결 기록이 삭제되었습니다.');
+    }
+
+    function resetToDefault() {
+      state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+      saveState();
+      renderAll();
+      showToast('초기 SOXL 4주 세팅으로 복원되었습니다.');
+    }
+
+    function copyOrders(ver) {
+      const p = computePortfolio();
+      const cfg = state.config;
+      const calc = calculateOrdersData(p);
+      let text = '';
+
+      if (ver === 'v1') {
+        const v1 = calc.v1;
+        const avgQ = cfg.orderMode === 'fixed' ? v1.halfQty : v1.amtHalfQty;
+        const bigQ = cfg.orderMode === 'fixed' ? v1.bigQty : v1.amtHalfQty;
+        text = `[${cfg.ticker} 라오어 1.0 주문표]\n` +
+               `- 평단 LOC 매수: $${v1.avgBuy.price.toFixed(2)} × ${avgQ}주${v1.avgBuy.capped ? ' (자전방지 상한적용)' : ''}\n` +
+               `- 큰수 LOC 매수: $${v1.bigBuy.price.toFixed(2)} × ${bigQ}주${v1.bigBuy.capped ? ' (자전방지 상한적용)' : ''}\n` +
+               `- 전량 지정가 매도(+10%): $${v1.sell10.toFixed(2)} × ${p.totalQty}주\n` +
+               `- 전량 지정가 매도(+12%): $${v1.sell12.toFixed(2)} × ${p.totalQty}주`;
+      } else {
+        const v4 = calc.v4;
+        const isFirstHalf = p.tValue < (calc.splits / 2);
+        const halfQty = Math.floor(calc.targetQty / 2);
+        const otherQty = calc.targetQty - halfQty;
+
+        if (isFirstHalf) {
+          const q1 = cfg.orderMode === 'fixed' ? halfQty : v4.amtHalfQty;
+          const q2 = cfg.orderMode === 'fixed' ? otherQty : v4.amtStarHalfQty;
+          text = `[${cfg.ticker} 라오어 4.0 주문표 | T=${p.tValue.toFixed(2)} | 별지점 $${v4.starPrice.toFixed(2)}]\n` +
+                 `- 평단 LOC 매수: $${v4.avgBuy.price.toFixed(2)} × ${q1}주${v4.avgBuy.capped ? ' (자전방지 상한적용)' : ''}\n` +
+                 `- 별지점-$0.01 LOC 매수: $${v4.starBuy.price.toFixed(2)} × ${q2}주${v4.starBuy.capped ? ' (자전방지 상한적용)' : ''}\n` +
+                 `- 쿼터 별지점 LOC 매도(1/4): $${v4.starPrice.toFixed(2)} × ${v4.quarterQty}주\n` +
+                 `- 지정가 익절 매도(+20%, 3/4): $${v4.sell20.toFixed(2)} × ${v4.restQty}주`;
+        } else {
+          const fullQ = cfg.orderMode === 'fixed' ? calc.targetQty : v4.amtStarFullQty;
+          text = `[${cfg.ticker} 라오어 4.0 주문표 | T=${p.tValue.toFixed(2)} | 별지점 $${v4.starPrice.toFixed(2)}]\n` +
+                 `- 후반전 별지점-$0.01 LOC 매수: $${v4.starBuy.price.toFixed(2)} × ${fullQ}주${v4.starBuy.capped ? ' (자전방지 상한적용)' : ''}\n` +
+                 `- 쿼터 별지점 LOC 매도(1/4): $${v4.starPrice.toFixed(2)} × ${v4.quarterQty}주\n` +
+                 `- 지정가 익절 매도(+20%, 3/4): $${v4.sell20.toFixed(2)} × ${v4.restQty}주`;
+        }
+      }
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => showToast('주문표가 클립보드에 복사되었습니다.'));
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast('주문표가 클립보드에 복사되었습니다.');
+      }
+    }
+
+    // 메모 전체보기 모달
+    function openMemoModal(id) {
+      const tx = state.transactions.find(t => t.id === id);
+      if (!tx) return;
+      editingMemoTxId = id;
+      document.getElementById('memoTxMeta').textContent = `${tx.date} | ${tx.type === 'BUY' ? '매수' : '매도'} ${tx.qty}주 @ ${fmtUsd(tx.price)}`;
+      document.getElementById('memoModalTextarea').value = tx.memo || '';
+      const modal = document.getElementById('memoModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeMemoModal() {
+      const modal = document.getElementById('memoModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      editingMemoTxId = null;
+    }
+
+    function saveMemoEdit() {
+      if (!editingMemoTxId) return;
+      const tx = state.transactions.find(t => t.id === editingMemoTxId);
+      if (tx) {
+        tx.memo = document.getElementById('memoModalTextarea').value.trim();
+        saveState();
+        renderAll();
+        showToast('메모가 수정되었습니다.');
+      }
+      closeMemoModal();
+    }
+
+    // 실시간 시세 API 설정 모달
+    function openApiModal() {
+      selectedModalProvider = state.api.provider || 'twelvedata';
+      document.getElementById('apiKeyInput').value = state.api.key || '';
+      document.getElementById('apiTestResult').classList.add('hidden');
+      selectProvider(selectedModalProvider, false);
+      const modal = document.getElementById('apiModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeApiModal() {
+      const modal = document.getElementById('apiModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function selectProvider(prov, shouldFocus = true) {
+      selectedModalProvider = prov;
+      const btns = {
+        finnhub: document.getElementById('provFinnhubBtn'),
+        twelvedata: document.getElementById('provTwelveBtn'),
+        none: document.getElementById('provNoneBtn')
+      };
+
+      Object.keys(btns).forEach(k => {
+        if (k === prov) {
+          btns[k].className = 'py-2.5 px-2 rounded-xl border-2 border-blue-600 bg-blue-50 text-blue-700 text-xs font-extrabold text-center transition cursor-pointer';
+        } else {
+          btns[k].className = 'py-2.5 px-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-xs font-extrabold text-center transition cursor-pointer';
+        }
+      });
+
+      const keySection = document.getElementById('apiKeyInputSection');
+      const keyInput = document.getElementById('apiKeyInput');
+      const helpLink = document.getElementById('apiHelpLink');
+      const desc = document.getElementById('apiProviderDesc');
+
+      if (prov === 'none') {
+        keySection.classList.add('opacity-40', 'pointer-events-none');
+      } else {
+        keySection.classList.remove('opacity-40', 'pointer-events-none');
+        if (prov === 'finnhub') {
+          keyInput.placeholder = 'Finnhub API Key 입력 (예: cxxxxxxxxxxxxx)';
+          helpLink.href = 'https://finnhub.io/register';
+          desc.textContent = 'Finnhub 무료 키는 분당 60회 호출 및 미국주식 실시간 현재가(c) 조회를 지원합니다.';
+        } else {
+          keyInput.placeholder = 'Twelve Data API Key 입력';
+          helpLink.href = 'https://twelvedata.com/pricing';
+          desc.textContent = 'Twelve Data 무료 키는 일 800회 호출 및 미국 ETF/주식 실시간 시세와 USD/KRW 환율을 지원합니다.';
+        }
+        if (shouldFocus) keyInput.focus();
+      }
+    }
+
+    function toggleApiKeyVisibility() {
+      const input = document.getElementById('apiKeyInput');
+      const btn = document.getElementById('toggleKeyBtn');
+      if (input.type === 'password') {
+        input.type = 'text';
+        btn.textContent = '숨김';
+      } else {
+        input.type = 'password';
+        btn.textContent = '표시';
+      }
+    }
+
+    async function queryTickerPrice(provider, key, ticker) {
+      if (provider === 'finnhub') {
+        const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(ticker)}&token=${encodeURIComponent(key)}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (data && typeof data.c === 'number' && data.c > 0) return data.c;
+        throw new Error('유효한 시세 데이터가 없습니다. API Key 또는 티커를 확인하세요.');
+      } else if (provider === 'twelvedata') {
+        const res = await fetch(`https://api.twelvedata.com/price?symbol=${encodeURIComponent(ticker)}&apikey=${encodeURIComponent(key)}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (data && data.price && !isNaN(parseFloat(data.price))) return parseFloat(data.price);
+        throw new Error(data.message || '시세 조회 실패');
+      }
+      throw new Error('제공사가 선택되지 않았습니다.');
+    }
+
+    async function fetchLiveExchangeRate(notify = false) {
+      const apiKey = (state.api.provider === 'twelvedata' && state.api.key)
+        ? state.api.key
+        : DEFAULT_STATE.api.key;
+      if (!apiKey) return;
+
+      try {
+        const res = await fetch(`https://api.twelvedata.com/price?symbol=USD%2FKRW&apikey=${encodeURIComponent(apiKey)}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (data && data.price && !isNaN(parseFloat(data.price))) {
+          const liveRate = Number(parseFloat(data.price).toFixed(2));
+          if (liveRate > 0) {
+            state.config.exchangeRate = liveRate;
+            state.config.usdCapital = Number((state.config.krwCapital / liveRate).toFixed(2));
+            saveState();
+            renderAll();
+            if (notify) showToast(`실시간 환율 ${liveRate.toLocaleString('ko-KR')}원/$ 반영 완료`);
+          }
+        }
+      } catch (e) {
+        if (notify) showToast(`환율 조회 실패: ${e.message}`);
+      }
+    }
+
+    async function testApiConnection() {
+      const resBox = document.getElementById('apiTestResult');
+      if (selectedModalProvider === 'none') {
+        resBox.className = 'rounded-xl p-3 text-xs font-semibold bg-slate-100 text-slate-700';
+        resBox.textContent = '수동 입력 모드입니다. 대시보드 현재가 칸에 직접 숫자를 입력해 사용합니다.';
+        resBox.classList.remove('hidden');
+        return;
+      }
+      const key = document.getElementById('apiKeyInput').value.trim();
+      if (!key) {
+        resBox.className = 'rounded-xl p-3 text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200';
+        resBox.textContent = 'API Key를 먼저 입력해 주세요.';
+        resBox.classList.remove('hidden');
+        return;
+      }
+
+      resBox.className = 'rounded-xl p-3 text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200';
+      resBox.textContent = `${state.config.ticker} 시세 연결 테스트 중...`;
+      resBox.classList.remove('hidden');
+
+      try {
+        const price = await queryTickerPrice(selectedModalProvider, key, state.config.ticker);
+        resBox.className = 'rounded-xl p-3 text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200';
+        resBox.textContent = `연결 성공! ${state.config.ticker} 현재가: ${fmtUsd(price)}`;
+      } catch (err) {
+        resBox.className = 'rounded-xl p-3 text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200';
+        resBox.textContent = `연결 실패: ${err.message}`;
+      }
+    }
+
+    function saveApiSettings() {
+      const key = document.getElementById('apiKeyInput').value.trim();
+      state.api.provider = selectedModalProvider;
+      state.api.key = key;
+      saveState();
+      closeApiModal();
+      updateApiBadge();
+      if (state.api.provider !== 'none' && state.api.key) {
+        fetchLivePrice(true);
+        fetchLiveExchangeRate(false);
+      } else {
+        showToast('시세 API 설정이 저장되었습니다.');
+      }
+    }
+
+    function updateApiBadge() {
+      const dot = document.getElementById('apiStatusDot');
+      const txt = document.getElementById('apiStatusText');
+      if (state.api.provider !== 'none' && state.api.key) {
+        const label = state.api.provider === 'finnhub' ? 'Finnhub 연동됨' : 'TwelveData 연동됨';
+        dot.className = 'w-2 h-2 rounded-full bg-emerald-400 shrink-0';
+        txt.textContent = label;
+        txt.className = 'text-emerald-300';
+      } else {
+        dot.className = 'w-2 h-2 rounded-full bg-amber-400 shrink-0';
+        txt.textContent = 'API 키 미설정 (수동입력)';
+        txt.className = 'text-amber-300';
+      }
+    }
+
+    async function fetchLivePrice(notify = false) {
+      if (state.api.provider === 'none' || !state.api.key) {
+        if (notify) openApiModal();
+        return;
+      }
+      try {
+        const price = await queryTickerPrice(state.api.provider, state.api.key, state.config.ticker);
+        state.config.currentPrice = price;
+        saveState();
+        renderAll();
+        if (notify) showToast(`${state.config.ticker} 현재가 ${fmtUsd(price)} 반영 완료`);
+      } catch (e) {
+        if (notify) showToast(`시세 조회 실패: ${e.message}`);
+      }
+    }
+
+    // 초기화 실행
+    (function init() {
+      document.getElementById('txDate').value = new Date().toISOString().slice(0, 10);
+      renderAll();
+      updateTxPreview();
+      if (state.api.provider !== 'none' && state.api.key) {
+        fetchLivePrice(false);
+      }
+      fetchLiveExchangeRate(false);
+    })();
+  </script>
+</body>
+</html>
