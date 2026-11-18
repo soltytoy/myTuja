@@ -17,7 +17,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
-    /* 전역 박스 모델 및 가로 넘침 방지 */
     *, *::before, *::after {
       box-sizing: border-box;
     }
@@ -43,7 +42,6 @@
       white-space: nowrap;
     }
 
-    /* 일일 체결 결과 입력 폼 반응형 3열 그리드 */
     .input-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -70,7 +68,6 @@
       width: 100%;
     }
 
-    /* 모든 입력 칸 높이(44px) 및 너비(100%) 통일 */
     .form-control {
       height: 44px;
       width: 100%;
@@ -88,7 +85,6 @@
       transition: border-color 0.15s ease, box-shadow 0.15s ease;
     }
 
-    /* Safari / iPadOS <input type="date"> 고유 최소 너비 해제 */
     input[type="date"].form-control {
       -webkit-appearance: none;
       appearance: none;
@@ -106,10 +102,16 @@
       box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
     }
 
+    .form-control[readonly] {
+      background-color: #f8fafc;
+      color: #475569;
+      cursor: not-allowed;
+    }
+
     /* 상단 6대 KPI 1행 고정 (좁은 화면 가로 스크롤) */
     .kpi-scroll {
       display: grid;
-      grid-template-columns: repeat(6, minmax(175px, 1fr));
+      grid-template-columns: repeat(6, minmax(168px, 1fr));
       gap: 10px;
       overflow-x: auto;
       padding-bottom: 4px;
@@ -121,27 +123,20 @@
       -webkit-overflow-scrolling: touch;
     }
 
-    /* 테이블 제목행 가운데 정렬 및 줄바꿈 방지 */
     #journalTable thead th,
     #overviewTable thead th {
       text-align: center;
       white-space: nowrap;
     }
 
-    /* 종목 탭 가로 스크롤바 숨김 및 터치 스크롤 */
-    .tab-bar-scroll {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-    }
-    .tab-bar-scroll::-webkit-scrollbar {
+    .no-scrollbar::-webkit-scrollbar {
       display: none;
     }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
 
-    /* 커스텀 스크롤바 */
     ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
@@ -169,163 +164,170 @@
       </div>
 
       <div class="flex flex-wrap items-center gap-2">
+        <!-- 클라우드 동기화 상태 표시 -->
+        <span id="cloudSyncPill" class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[11px] font-bold bg-slate-800 border border-slate-700 text-slate-300 no-wrap">
+          <span id="cloudSyncDot" class="w-2 h-2 rounded-full bg-slate-400"></span>
+          <span id="cloudSyncText">로컬 모드</span>
+        </span>
+
         <!-- 시세 API 상태 배지 -->
-        <button id="apiStatusBadge" type="button" onclick="openApiModal()" class="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 border border-slate-700 text-emerald-300 flex items-center gap-1.5 transition no-wrap cursor-pointer">
-          <span id="apiStatusDot" class="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
-          <span id="apiStatusText">TwelveData 연동됨</span>
+        <button id="apiStatusBadge" type="button" onclick="openApiModal()" class="px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 border border-slate-700 text-amber-300 flex items-center gap-1.5 transition no-wrap cursor-pointer">
+          <span id="apiStatusDot" class="w-2 h-2 rounded-full bg-amber-400 shrink-0"></span>
+          <span id="apiStatusText">API 키 미설정</span>
         </button>
 
         <!-- 실시간 시세 API 설정 버튼 -->
-        <button type="button" onclick="openApiModal()" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-sky-600 hover:bg-sky-500 text-white shadow-sm transition no-wrap cursor-pointer">
+        <button type="button" onclick="openApiModal()" class="px-3 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white transition no-wrap cursor-pointer">
           시세 API 설정
+        </button>
+
+        <!-- 사용자 계정 로그인/프로필 버튼 -->
+        <button id="authHeaderBtn" type="button" onclick="openAuthModal()" class="px-3.5 py-2 rounded-xl text-xs font-extrabold bg-blue-600 hover:bg-blue-500 text-white shadow-sm flex items-center gap-1.5 transition no-wrap cursor-pointer">
+          <span id="authHeaderBtnText">로그인 / 회원가입</span>
         </button>
       </div>
     </div>
 
-    <!-- 상단 네비게이션 탭 바 (종합 투자현황 + 개별 종목 탭 + 종목 추가) -->
-    <div class="bg-slate-950/90 border-t border-slate-800">
+    <!-- 통합 네비게이션 탭 바 (📊 종합 투자현황 + 다중 종목 탭 + 종목 추가) -->
+    <div class="bg-slate-800/95 border-t border-slate-700/80">
       <div class="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between gap-2">
-        <div id="topNavTabs" class="tab-bar-scroll flex-1 py-0.5"></div>
-        <button type="button" onclick="openAddTickerModal()" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold flex items-center gap-1 shadow-xs transition shrink-0 no-wrap cursor-pointer">
-          <span>+</span>
-          <span>종목 추가</span>
-        </button>
+        <div id="tickerTabsContainer" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 flex-1"></div>
+        <div class="flex items-center gap-1.5 shrink-0">
+          <button type="button" onclick="refreshAllPrices(true)" title="전 종목 실시간 시세 및 환율 새로고침" class="px-2.5 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-bold transition no-wrap cursor-pointer">
+            ↻ 전종목 시세
+          </button>
+          <button type="button" onclick="openAddTickerModal()" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold shadow-xs transition no-wrap cursor-pointer">
+            + 종목 추가
+          </button>
+        </div>
       </div>
     </div>
   </header>
 
   <main class="max-w-7xl mx-auto px-4 pt-5 space-y-5">
 
-    <!-- =========================================================
-         VIEW 1: 종합 투자현황 뷰 (OVERVIEW)
-    ========================================================== -->
-    <div id="overviewView" class="space-y-5 hidden">
-      <!-- 총 투자원금 및 원금 배분 현황 카드 -->
+    <!-- 비로그인 / 신규 사용자 안내 배너 -->
+    <div id="guestNoticeBanner" class="bg-blue-50 border border-blue-200 rounded-2xl px-4 py-3 flex flex-wrap items-center justify-between gap-2 text-xs">
+      <div class="flex items-center gap-2 text-blue-900">
+        <span class="px-2 py-0.5 rounded-md bg-blue-600 text-white font-extrabold text-[11px] no-wrap">클라우드 안내</span>
+        <span>현재 브라우저 로컬 모드입니다. <strong>로그인 / 회원가입</strong>을 하면 여러 기기에서 본인만의 투자원금과 매매일지가 안전하게 클라우드에 저장됩니다.</span>
+      </div>
+      <button type="button" onclick="openAuthModal()" class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold no-wrap cursor-pointer">
+        지금 로그인하기
+      </button>
+    </div>
+
+    <!-- =====================================================================
+         VIEW 1: 종합 투자현황 탭 (전체 포트폴리오 통합 요약 & 원금 배분 관리)
+         ===================================================================== -->
+    <div id="overviewView" class="space-y-5">
+
+      <!-- 총 투자원금 및 종목별 배분 현황 카드 -->
       <section aria-label="총 투자원금 및 배분 현황" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5">
         <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
           <div>
-            <h2 class="text-sm sm:text-base font-extrabold text-slate-900 flex items-center gap-2">
+            <h2 class="text-sm font-extrabold text-slate-800 flex items-center gap-1.5">
               <span class="w-1.5 h-4 bg-indigo-600 rounded-full"></span>
               총 투자원금 및 종목별 비중 배분 현황
             </h2>
-            <p class="text-xs text-slate-500 mt-0.5">전체 투자원금을 설정하면 각 종목 탭의 투자 비중(%)에 따라 종목별 투자운영금이 자동 계산됩니다.</p>
+            <p class="text-xs text-slate-500 mt-0.5">총 투자원금을 설정하면 각 종목의 투자 비중(%)에 따라 투자운영금이 자동 산출됩니다.</p>
           </div>
-          <button type="button" onclick="refreshAllTickersLive()" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition no-wrap cursor-pointer">
-            전 종목 시세 · 환율 일괄조회
-          </button>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5">
+              <label for="totalPortfolioKrwInput" class="text-xs font-extrabold text-slate-600 no-wrap">총 투자원금 (원)</label>
+              <input id="totalPortfolioKrwInput" type="text" inputmode="numeric" class="w-32 sm:w-36 text-right font-extrabold text-sm text-indigo-700 bg-white border border-slate-300 rounded-lg px-2.5 py-1 tabular-nums outline-none focus:border-indigo-600" value="10,000,000" oninput="formatKrwInput(this)" onchange="updateTotalPortfolioKrw()" />
+            </div>
+
+            <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5">
+              <label for="globalRateInput" class="text-xs font-extrabold text-slate-600 no-wrap">기준환율 (원/$)</label>
+              <input id="globalRateInput" type="text" inputmode="decimal" class="w-24 text-right font-extrabold text-sm text-slate-800 bg-white border border-slate-300 rounded-lg px-2 py-1 tabular-nums outline-none focus:border-indigo-600" value="1,336" oninput="formatDecimalCommaInput(this)" onchange="updateGlobalExchangeRate()" />
+            </div>
+          </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
-          <!-- 총 투자원금 입력 & 적용환율 -->
-          <div class="lg:col-span-5 grid grid-cols-2 gap-3">
-            <div class="form-field">
-              <label for="ovTotalKrwInput" class="text-[11px] font-bold text-slate-500 mb-1 no-wrap">총 투자원금 (원)</label>
-              <input id="ovTotalKrwInput" type="text" inputmode="numeric" value="10,000,000"
-                oninput="formatKrwInput(this)" onchange="updateTotalCapitalFromOverview()"
-                class="form-control font-extrabold text-indigo-700 tabular-nums text-center text-sm" />
+        <!-- 비중 배분 진행 바 -->
+        <div class="bg-slate-50 rounded-xl p-3.5 border border-slate-200/80 space-y-2">
+          <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
+            <div class="flex items-center gap-2">
+              <span class="font-extrabold text-slate-700">총 배정 비중:</span>
+              <span id="ovAllocPctText" class="font-extrabold text-indigo-700 tabular-nums">0%</span>
+              <span id="ovAllocWarning" class="hidden px-2 py-0.5 rounded bg-rose-100 text-rose-700 font-extrabold text-[11px]">100% 초과 배정</span>
             </div>
-            <div class="form-field">
-              <label for="ovExchangeRateInput" class="text-[11px] font-bold text-slate-500 mb-1 no-wrap">기준 환율 (원/$)</label>
-              <input id="ovExchangeRateInput" type="text" inputmode="decimal" value="1,336"
-                oninput="formatDecimalCommaInput(this)" onchange="updateGlobalRateFromOverview()"
-                class="form-control font-bold text-slate-800 tabular-nums text-center text-sm" />
+            <div class="text-slate-600 tabular-nums">
+              배정합계 <strong id="ovAllocatedKrw" class="text-slate-900">0원</strong> / 미배정 잔여 <strong id="ovUnallocatedKrw" class="text-emerald-700">10,000,000원</strong>
             </div>
           </div>
-
-          <!-- 배분 진행 바 & 미배정 원금 요약 -->
-          <div class="lg:col-span-7 bg-slate-50 rounded-xl p-3.5 border border-slate-200/80 space-y-2">
-            <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
-              <div class="flex items-center gap-2">
-                <span class="font-bold text-slate-700">총 투자 비중 합계:</span>
-                <span id="ovAllocPctBadge" class="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-extrabold tabular-nums">100.0%</span>
-              </div>
-              <div class="tabular-nums text-slate-600 font-semibold">
-                배정 <span id="ovAllocatedKrwText" class="font-extrabold text-slate-900">10,000,000원</span>
-                <span class="mx-1 text-slate-300">|</span>
-                미배정 <span id="ovUnallocatedKrwText" class="font-extrabold text-indigo-600">0원</span>
-              </div>
-            </div>
-
-            <div class="w-full h-2.5 rounded-full bg-slate-200 overflow-hidden">
-              <div id="ovAllocProgressBar" class="h-full bg-emerald-500 rounded-full transition-all duration-300" style="width: 100%;"></div>
-            </div>
-
-            <p id="ovAllocWarning" class="hidden text-[11px] font-bold text-rose-600">
-              ⚠ 종목별 투자 비중 합계가 100%를 초과했습니다. 각 종목 탭에서 투자 비중(%)을 조정해 주세요.
-            </p>
+          <div class="w-full h-2.5 bg-slate-200 rounded-full overflow-hidden">
+            <div id="ovAllocProgressBar" class="h-full bg-indigo-600 rounded-full transition-all duration-300" style="width: 0%;"></div>
           </div>
         </div>
       </section>
 
-      <!-- 종합 6대 핵심 KPI 요약 카드 -->
-      <section aria-label="종합 포트폴리오 요약 지표" class="kpi-scroll text-center">
-        <!-- 1) 총 매수원금 -->
+      <!-- 종합 6대 핵심 KPI 요약 카드 (1행 고정 · 가운데 정렬) -->
+      <section aria-label="종합 포트폴리오 요약 지표" class="kpi-scroll">
         <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 overflow-hidden text-center">
-          <div class="text-[11px] font-bold text-slate-500 no-wrap text-center">총 매수원금</div>
-          <div id="ovKpiCostUsd" class="text-[15px] font-extrabold text-slate-900 mt-1 tabular-nums no-wrap text-center">$192.84</div>
-          <div id="ovKpiCostKrw" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-center">약 257,634원</div>
+          <div class="text-[11px] font-bold text-slate-500 no-wrap">총 매수원금</div>
+          <div id="ovKpiCost" class="text-[15px] font-extrabold text-slate-900 mt-1 tabular-nums no-wrap text-center">$0.00</div>
+          <div id="ovKpiCostSub" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-center">약 0원</div>
         </div>
 
-        <!-- 2) 총 평가금액 · 수익률 -->
         <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 overflow-hidden text-center">
-          <div class="text-[11px] font-bold text-slate-500 no-wrap text-center">총 평가금액 · 수익률</div>
-          <div id="ovKpiEvalUsd" class="text-[15px] font-extrabold text-slate-800 mt-1 tabular-nums no-wrap text-center">$192.84 (0.00%)</div>
-          <div id="ovKpiEvalKrw" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-center">약 257,634원</div>
+          <div class="text-[11px] font-bold text-slate-500 no-wrap">총 평가금액 · 수익률</div>
+          <div id="ovKpiEval" class="text-[15px] font-extrabold text-slate-800 mt-1 tabular-nums no-wrap text-center">$0.00 (0.00%)</div>
+          <div id="ovKpiEvalSub" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-center">약 0원</div>
         </div>
 
-        <!-- 3) 총 평가손익 -->
         <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 overflow-hidden text-center">
-          <div class="text-[11px] font-bold text-slate-500 no-wrap text-center">총 평가손익</div>
-          <div id="ovKpiUnrealizedUsd" class="text-[15px] font-extrabold text-slate-800 mt-1 tabular-nums no-wrap text-center">$0.00</div>
-          <div id="ovKpiUnrealizedKrw" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-center">약 0원</div>
+          <div class="text-[11px] font-bold text-slate-500 no-wrap">총 평가손익</div>
+          <div id="ovKpiEvalPnl" class="text-[15px] font-extrabold text-slate-800 mt-1 tabular-nums no-wrap text-center">$0.00</div>
+          <div id="ovKpiEvalPnlSub" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-center">약 0원</div>
         </div>
 
-        <!-- 4) 총 잔여 예수금 -->
         <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 overflow-hidden text-center">
-          <div class="text-[11px] font-bold text-slate-500 no-wrap text-center">총 잔여 예수금</div>
-          <div id="ovKpiCashUsd" class="text-[15px] font-extrabold text-slate-900 mt-1 tabular-nums no-wrap text-center">$7,292.19</div>
-          <div id="ovKpiCashKrw" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-center">약 9,742,366원</div>
+          <div class="text-[11px] font-bold text-slate-500 no-wrap">총 잔여 예수금</div>
+          <div id="ovKpiCash" class="text-[15px] font-extrabold text-slate-900 mt-1 tabular-nums no-wrap text-center">$0.00</div>
+          <div id="ovKpiCashSub" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-center">배정원금 $0.00</div>
         </div>
 
-        <!-- 5) 운영금 대비 수익률 -->
         <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 overflow-hidden text-center">
-          <div class="text-[11px] font-bold text-slate-500 no-wrap text-center">운영금 대비 수익률</div>
-          <div id="ovKpiCapYieldPct" class="text-[15px] font-extrabold text-slate-800 mt-1 tabular-nums no-wrap text-center">0.00%</div>
-          <div id="ovKpiCapYieldSub" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-center">총손익 $0.00</div>
+          <div class="text-[11px] font-bold text-slate-500 no-wrap">운영금 대비 수익률</div>
+          <div id="ovKpiCapReturn" class="text-[15px] font-extrabold text-slate-800 mt-1 tabular-nums no-wrap text-center">0.00%</div>
+          <div id="ovKpiCapReturnSub" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-center">총손익 $0.00 / $0.00</div>
         </div>
 
-        <!-- 6) 총 실현손익 · 실현수익률 -->
         <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 overflow-hidden text-center">
-          <div class="text-[11px] font-bold text-slate-500 no-wrap text-center">총 실현손익 · 실현수익률</div>
-          <div id="ovKpiRealizedUsd" class="text-[15px] font-extrabold text-slate-800 mt-1 tabular-nums no-wrap text-center">$0.00 (0.00%)</div>
-          <div id="ovKpiRealizedKrw" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-center">약 0원</div>
+          <div class="text-[11px] font-bold text-slate-500 no-wrap">실현손익 · 실현수익률</div>
+          <div id="ovKpiRealized" class="text-[15px] font-extrabold text-slate-800 mt-1 tabular-nums no-wrap text-center">$0.00 (0.00%)</div>
+          <div id="ovKpiRealizedSub" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-center">매도원금 $0.00 · 약 0원</div>
         </div>
       </section>
 
-      <!-- 종목별 운용 현황 요약표 -->
+      <!-- 종목별 운용 현황 요약 테이블 -->
       <section aria-label="종목별 운용 현황 요약표" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        <div class="px-4 py-3.5 border-b border-slate-200 flex items-center justify-between gap-2">
+        <div class="px-4 py-3.5 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
           <div class="flex items-center gap-2">
-            <h3 class="text-sm font-extrabold text-slate-800">종목별 운용 현황 요약표</h3>
-            <span id="ovTickerCountBadge" class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-indigo-50 text-indigo-700 tabular-nums">1종목</span>
+            <h2 class="text-sm font-extrabold text-slate-800">종목별 운용 현황 요약</h2>
+            <span id="ovTickerCountBadge" class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-indigo-50 text-indigo-700 tabular-nums">0종목</span>
           </div>
-          <span class="text-xs text-slate-400">행 클릭 시 해당 종목 상세 탭으로 이동</span>
+          <span class="text-xs text-slate-400">종목 행을 클릭하면 해당 종목 상세 대시보드로 이동합니다</span>
         </div>
+
         <div class="table-wrap">
           <table id="overviewTable" class="w-full text-xs border-collapse">
             <thead>
               <tr class="bg-slate-50 text-slate-600 border-b border-slate-200">
                 <th class="py-3 px-3 font-extrabold text-center no-wrap">종목</th>
-                <th class="py-3 px-3 font-extrabold text-center no-wrap">투자 비중</th>
-                <th class="py-3 px-3 font-extrabold text-center no-wrap">투자운영금</th>
+                <th class="py-3 px-3 font-extrabold text-center no-wrap">투자비중</th>
+                <th class="py-3 px-3 font-extrabold text-center no-wrap">투자운영금($)</th>
                 <th class="py-3 px-3 font-extrabold text-center no-wrap">현재가</th>
                 <th class="py-3 px-3 font-extrabold text-center no-wrap">보유수량</th>
                 <th class="py-3 px-3 font-extrabold text-center no-wrap">매입평단</th>
                 <th class="py-3 px-3 font-extrabold text-center no-wrap">평가손익 / 수익률</th>
                 <th class="py-3 px-3 font-extrabold text-center no-wrap">잔여예수금</th>
-                <th class="py-3 px-3 font-extrabold text-center no-wrap">실현손익 / 실현수익률</th>
                 <th class="py-3 px-3 font-extrabold text-center no-wrap">운영금대비 수익률</th>
-                <th class="py-3 px-3 font-extrabold text-center no-wrap">4.0 진행도(T)</th>
+                <th class="py-3 px-3 font-extrabold text-center no-wrap">실현손익 / 실현수익률</th>
+                <th class="py-3 px-3 font-extrabold text-center no-wrap">4.0 진행(T)</th>
               </tr>
             </thead>
             <tbody id="overviewTableBody" class="divide-y divide-slate-100 tabular-nums"></tbody>
@@ -334,26 +336,20 @@
       </section>
     </div>
 
-    <!-- =========================================================
-         VIEW 2: 개별 종목 상세 뷰 (TICKER DETAIL)
-    ========================================================== -->
-    <div id="tickerDetailView" class="space-y-5">
+    <!-- =====================================================================
+         VIEW 2: 개별 종목 상세 대시보드 뷰
+         ===================================================================== -->
+    <div id="tickerDetailView" class="hidden space-y-5">
 
-      <!-- 1. 기초 운용 설정 (투자 비중 % 포함 7개 항목 인라인 직접 수정 패널) -->
+      <!-- 1. 기초 운용 설정 (투자 비중 % 포함 · 직접 수정 패널) -->
       <section aria-label="기초 운용 설정" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
         <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
           <h2 class="text-sm font-extrabold text-slate-800 flex items-center gap-1.5">
             <span class="w-1.5 h-4 bg-blue-600 rounded-full"></span>
-            기초 운용 설정 (직접 입력 · 즉시 반영)
+            <span id="activeTickerSectionTitle">기초 운용 설정 (직접 입력 · 즉시 반영)</span>
           </h2>
 
           <div class="flex flex-wrap items-center gap-2">
-            <!-- 총 투자원금 기준 비중 재계산 버튼 -->
-            <button type="button" onclick="recalcCapitalFromAllocation(true)" title="총 투자원금 × 투자 비중(%)으로 투자운영금을 다시 계산합니다"
-              class="px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 text-xs font-extrabold transition no-wrap cursor-pointer">
-              비중재계산
-            </button>
-
             <!-- 일일 주문 산출 모드 전환 토글 -->
             <div class="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200 text-xs">
               <button type="button" id="modeFixedBtn" onclick="setOrderMode('fixed')" class="px-3 py-1 rounded-lg font-bold bg-white text-blue-600 shadow-xs transition no-wrap cursor-pointer">
@@ -364,7 +360,7 @@
               </button>
             </div>
 
-            <!-- 일일 목표 수량 스테퍼 (- 4주 +) -->
+            <!-- 일일 목표 수량 스테퍼 -->
             <div id="fixedQtyStepper" class="inline-flex items-center bg-slate-100 border border-slate-200 rounded-xl px-2 py-1 text-xs">
               <span class="text-slate-500 font-semibold mr-1.5 no-wrap">일일목표</span>
               <button type="button" onclick="changeTargetQty(-1)" aria-label="목표 수량 1주 감소" class="w-6 h-6 rounded-lg bg-white border border-slate-200 font-extrabold text-slate-700 hover:bg-slate-50 active:scale-95 transition cursor-pointer">-</button>
@@ -374,21 +370,29 @@
           </div>
         </div>
 
-        <!-- 7개 핵심 파라미터 1행 배치 -->
+        <!-- 7개 핵심 파라미터 1행 배치 (투자 비중 % + 투자운영금 읽기전용) -->
         <div class="grid grid-cols-7 gap-2 overflow-x-auto pb-1">
-          <div class="form-field min-w-[84px]">
+          <div class="form-field min-w-[88px]">
             <label for="cfgTicker" class="text-[11px] font-bold text-slate-500 mb-1 no-wrap text-center">종목 (Ticker)</label>
             <input id="cfgTicker" type="text" maxlength="12" class="form-control uppercase font-extrabold text-blue-700 px-2 text-xs sm:text-sm text-center" value="SOXL" onchange="updateBasicConfig('ticker')" />
           </div>
 
-          <div class="form-field min-w-[86px]">
-            <label for="cfgAllocPct" class="text-[11px] font-bold text-indigo-600 mb-1 no-wrap text-center">투자 비중 (%)</label>
-            <input id="cfgAllocPct" type="number" step="0.1" min="0" max="100" class="form-control font-extrabold text-indigo-700 bg-indigo-50/40 tabular-nums px-2 text-xs sm:text-sm text-center" value="100" onchange="updateBasicConfig('allocPct')" />
+          <div class="form-field min-w-[118px]">
+            <div class="flex items-center gap-1 mb-1">
+              <label for="cfgAllocPct" class="flex-1 text-[11px] font-bold text-indigo-600 no-wrap text-center">투자 비중 (%)</label>
+              <span aria-hidden="true" class="px-1.5 text-[11px] font-bold opacity-0 pointer-events-none select-none shrink-0 no-wrap">적용</span>
+            </div>
+            <div class="flex gap-1">
+              <input id="cfgAllocPct" type="number" step="0.1" min="0" max="100" class="form-control font-extrabold text-indigo-700 tabular-nums px-1.5 text-xs sm:text-sm text-center" value="100" onchange="updateBasicConfig('allocPct')" />
+              <button type="button" onclick="applyAllocationToTicker()" title="총 투자원금 × 투자 비중(%)으로 투자운영금 재계산" class="px-2 h-[44px] rounded-[10px] bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold shrink-0 transition no-wrap cursor-pointer">
+                적용
+              </button>
+            </div>
           </div>
 
-          <div class="form-field min-w-[112px]">
+          <div class="form-field min-w-[114px]">
             <label for="cfgKrw" class="text-[11px] font-bold text-slate-500 mb-1 no-wrap text-center">투자운영금 (원)</label>
-            <input id="cfgKrw" type="text" inputmode="numeric" readonly tabindex="-1" title="총 투자원금 × 투자 비중(%)으로 자동 계산됩니다" class="form-control font-bold tabular-nums px-2 text-xs sm:text-sm text-center bg-slate-100 text-slate-600 cursor-not-allowed select-none" value="10,000,000" />
+            <input id="cfgKrw" type="text" readonly title="총 투자원금 × 투자 비중(%)으로 자동 계산됩니다" class="form-control font-bold tabular-nums px-2 text-xs sm:text-sm text-center" value="10,000,000" />
           </div>
 
           <div class="form-field min-w-[92px]">
@@ -406,13 +410,13 @@
             <input id="cfgSplits" type="number" min="10" max="100" class="form-control font-bold tabular-nums px-2 text-xs sm:text-sm text-center" value="40" onchange="updateBasicConfig('splits')" />
           </div>
 
-          <div class="form-field min-w-[144px]">
+          <div class="form-field min-w-[140px]">
             <div class="flex items-center gap-1 mb-1">
               <label for="currentPriceInput" class="flex-1 text-[11px] font-bold text-slate-500 no-wrap text-center">실시간 현재가 ($)</label>
               <span aria-hidden="true" class="px-2.5 text-xs font-bold opacity-0 pointer-events-none select-none shrink-0 no-wrap">조회</span>
             </div>
             <div class="flex gap-1">
-              <input id="currentPriceInput" type="text" inputmode="decimal" class="form-control font-extrabold text-emerald-700 tabular-nums px-2 text-xs sm:text-sm text-center" value="48.21" onkeydown="if(event.key==='Enter'){ event.preventDefault(); applyCurrentPrice(); }" />
+              <input id="currentPriceInput" type="text" inputmode="decimal" class="form-control font-extrabold text-emerald-700 tabular-nums px-2 text-xs sm:text-sm text-center" value="0.00" onkeydown="if(event.key==='Enter'){ event.preventDefault(); applyCurrentPrice(); }" />
               <button type="button" onclick="applyCurrentPrice()" title="입력한 현재가 반영 (빈칸일 경우 API 조회)" class="px-2.5 h-[44px] rounded-[10px] bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold shrink-0 transition no-wrap cursor-pointer">
                 조회
               </button>
@@ -421,54 +425,47 @@
         </div>
       </section>
 
-      <!-- 2. 상단 6대 핵심 KPI 요약 카드 (1행 고정 · 줄바꿈 금지 · 가운데 정렬 · 15px/10px) -->
-      <section aria-label="포트폴리오 요약 지표" class="kpi-scroll text-center">
-        <!-- 카드 1: 보유수량 -->
+      <!-- 2. 상단 6대 핵심 KPI 요약 카드 (1행 고정 · 가운데 정렬) -->
+      <section aria-label="포트폴리오 요약 지표" class="kpi-scroll">
         <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 overflow-hidden text-center">
-          <div class="text-[11px] font-bold text-slate-500 no-wrap text-center">보유수량</div>
-          <div id="kpiQty" class="text-[15px] font-extrabold text-slate-900 mt-1 tabular-nums no-wrap text-center">4 주</div>
-          <div id="kpiQtySub" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-center">매수원금 $192.84</div>
+          <div class="text-[11px] font-bold text-slate-500 no-wrap">보유수량</div>
+          <div id="kpiQty" class="text-[15px] font-extrabold text-slate-900 mt-1 tabular-nums no-wrap text-center">0 주</div>
+          <div id="kpiQtySub" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-center">매수원금 $0.00</div>
         </div>
 
-        <!-- 카드 2: 매입평단 -->
         <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 overflow-hidden text-center">
-          <div class="text-[11px] font-bold text-slate-500 no-wrap text-center">매입평단</div>
-          <div id="kpiAvg" class="text-[15px] font-extrabold text-blue-600 mt-1 tabular-nums no-wrap text-center">$48.21</div>
-          <div id="kpiAvgSub" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-center">원화 약 64,409원</div>
+          <div class="text-[11px] font-bold text-slate-500 no-wrap">매입평단</div>
+          <div id="kpiAvg" class="text-[15px] font-extrabold text-blue-600 mt-1 tabular-nums no-wrap text-center">$0.00</div>
+          <div id="kpiAvgSub" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-center">원화 약 0원</div>
         </div>
 
-        <!-- 카드 3: 현재가 · 수익률(%) -->
         <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 overflow-hidden text-center">
-          <div class="text-[11px] font-bold text-slate-500 no-wrap text-center">현재가 · 수익률(%)</div>
-          <div id="kpiEval" class="text-[15px] font-extrabold text-slate-800 mt-1 tabular-nums no-wrap text-center">$48.21 (0.00%)</div>
-          <div id="kpiEvalSub" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-center truncate">손익 $0.00 · 평가 $192.84</div>
+          <div class="text-[11px] font-bold text-slate-500 no-wrap">현재가 · 수익률(%)</div>
+          <div id="kpiEval" class="text-[15px] font-extrabold text-slate-800 mt-1 tabular-nums no-wrap text-center">$0.00 (0.00%)</div>
+          <div id="kpiEvalSub" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-center truncate">손익 $0.00 · 평가 $0.00</div>
         </div>
 
-        <!-- 카드 4: 잔여 예수금 -->
         <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 overflow-hidden text-center">
-          <div class="text-[11px] font-bold text-slate-500 no-wrap text-center">잔여 예수금</div>
-          <div id="kpiCash" class="text-[15px] font-extrabold text-slate-900 mt-1 tabular-nums no-wrap text-center">$7,292.19</div>
-          <div id="kpiCashSub" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-center">4주 기준 약 37.8회 여력</div>
+          <div class="text-[11px] font-bold text-slate-500 no-wrap">잔여 예수금</div>
+          <div id="kpiCash" class="text-[15px] font-extrabold text-slate-900 mt-1 tabular-nums no-wrap text-center">$0.00</div>
+          <div id="kpiCashSub" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-center">4주 기준 약 0.0회 여력</div>
         </div>
 
-        <!-- 카드 5: 운영금 대비 수익률 -->
         <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 overflow-hidden text-center">
-          <div class="text-[11px] font-bold text-slate-500 no-wrap text-center">운영금 대비 수익률</div>
-          <div id="kpiCapitalYieldPct" class="text-[15px] font-extrabold text-slate-800 mt-1 tabular-nums no-wrap text-center">0.00%</div>
-          <div id="kpiCapitalYieldSub" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-center">총손익 $0.00</div>
+          <div class="text-[11px] font-bold text-slate-500 no-wrap">운영금 대비 수익률</div>
+          <div id="kpiCapReturn" class="text-[15px] font-extrabold text-slate-800 mt-1 tabular-nums no-wrap text-center">0.00%</div>
+          <div id="kpiCapReturnSub" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-center">총손익 $0.00 / $0.00</div>
         </div>
 
-        <!-- 카드 6: 실현손익 · 실현수익률 -->
         <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 overflow-hidden text-center">
-          <div class="text-[11px] font-bold text-slate-500 no-wrap text-center">실현손익 · 실현수익률</div>
+          <div class="text-[11px] font-bold text-slate-500 no-wrap">실현손익 · 실현수익률</div>
           <div id="kpiRealized" class="text-[15px] font-extrabold text-slate-800 mt-1 tabular-nums no-wrap text-center">$0.00 (0.00%)</div>
-          <div id="kpiRealizedSub" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-center">원화 약 0원</div>
+          <div id="kpiRealizedSub" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-center">매도원금 $0.00</div>
         </div>
       </section>
 
-      <!-- 3. 라오어 1.0 vs 4.0 듀얼 다음 날 주문 계산기 (자전거래 방지 상한 적용) -->
+      <!-- 3. 라오어 1.0 vs 4.0 듀얼 다음 날 주문 계산기 -->
       <section aria-label="다음 날 주문 계산기" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <!-- Ver 1.0 카드 -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
           <div class="bg-slate-800 text-white px-4 py-3.5 flex items-center justify-between gap-2">
             <div>
@@ -476,7 +473,7 @@
                 <span class="px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-indigo-500 text-white">Ver 1.0</span>
                 <h3 class="font-bold text-sm">고정 분할 · 단순 익절 전략</h3>
               </div>
-              <p id="v1Subtitle" class="text-[11px] text-slate-300 mt-1 tabular-nums">1회기준 $187.13 · 금액진행 1.03회차</p>
+              <p id="v1Subtitle" class="text-[11px] text-slate-300 mt-1 tabular-nums">1회기준 $0.00 · 금액진행 0.00회차</p>
             </div>
             <button type="button" onclick="copyOrders('v1')" class="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-white transition no-wrap cursor-pointer">
               주문표 복사
@@ -485,7 +482,6 @@
           <div id="v1Body" class="p-4 space-y-3 text-sm flex-1 tabular-nums"></div>
         </div>
 
-        <!-- Ver 4.0 카드 -->
         <div class="bg-white rounded-2xl shadow-sm border border-blue-200 overflow-hidden flex flex-col">
           <div class="bg-blue-900 text-white px-4 py-3.5 flex items-center justify-between gap-2">
             <div>
@@ -493,7 +489,7 @@
                 <span class="px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-sky-400 text-slate-950">Ver 4.0</span>
                 <h3 class="font-bold text-sm">동적 1회매수금 · 별지점(☆%) 전략</h3>
               </div>
-              <p id="v4Subtitle" class="text-[11px] text-sky-200 mt-1 tabular-nums">전반전 (T &lt; 20) · 별% +19.00% · 별지점 $57.37</p>
+              <p id="v4Subtitle" class="text-[11px] text-sky-200 mt-1 tabular-nums">전반전 (T &lt; 20) · 별% +20.00% · 별지점 $0.00</p>
             </div>
             <button type="button" onclick="copyOrders('v4')" class="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-white transition no-wrap cursor-pointer">
               주문표 복사
@@ -508,12 +504,11 @@
         <div class="flex flex-wrap items-center justify-between gap-2 mb-3.5">
           <h2 class="text-sm font-extrabold text-slate-800 flex items-center gap-1.5">
             <span class="w-1.5 h-4 bg-emerald-600 rounded-full"></span>
-            일일 매수 · 매도 체결 결과 입력
+            <span id="txFormTickerLabel">일일 매수 · 매도 체결 결과 입력</span>
           </h2>
           <span class="text-xs text-slate-400">체결 후 입력하면 평단가·잔고·다음 날 주문표가 자동 갱신됩니다</span>
         </div>
 
-        <!-- 3단 반응형 균등 그리드 (날짜 칸 겹침 방지) -->
         <div class="input-grid">
           <div class="form-field">
             <label for="txDate" class="text-xs font-bold text-slate-600 mb-1">거래일자</label>
@@ -559,7 +554,6 @@
           </div>
         </div>
 
-        <!-- 메모 입력 및 반영 버튼 -->
         <div class="mt-3.5 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <input id="txMemo" type="text" placeholder="메모 (예: 전반전 평단 LOC 2주 + 별지점 LOC 2주 전량 체결)" class="form-control flex-1" />
           <button type="button" onclick="addTransaction()" class="h-[44px] px-6 rounded-[10px] bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-extrabold text-sm shadow-sm transition shrink-0 no-wrap cursor-pointer">
@@ -572,11 +566,11 @@
       <section aria-label="누적 매매 일지" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         <div class="px-4 py-3.5 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
           <div class="flex items-center gap-2">
-            <h2 class="text-sm font-extrabold text-slate-800">누적 매매 일지</h2>
-            <span id="logCountBadge" class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-slate-100 text-slate-600 tabular-nums">1건</span>
+            <h2 id="journalSectionTitle" class="text-sm font-extrabold text-slate-800">누적 매매 일지</h2>
+            <span id="logCountBadge" class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-slate-100 text-slate-600 tabular-nums">0건</span>
           </div>
-          <button type="button" onclick="resetCurrentTickerToDefault()" class="px-3 py-1.5 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold transition no-wrap cursor-pointer">
-            초기 데이터 복원
+          <button type="button" onclick="clearCurrentTickerLogs()" class="px-3 py-1.5 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold transition no-wrap cursor-pointer">
+            현재 종목 일지 초기화
           </button>
         </div>
 
@@ -606,19 +600,132 @@
 
   </main>
 
-  <!-- 모달 1: 실시간 시세 API 설정 전용 -->
+  <!-- 모달 1: 사용자 계정 로그인 / 회원가입 / 프로필 -->
+  <div id="authModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4" onclick="if(event.target===this) closeAuthModal()">
+    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden" onclick="event.stopPropagation()">
+      <div class="px-5 py-4 bg-slate-900 text-white flex items-center justify-between">
+        <div>
+          <span class="text-[10px] font-extrabold uppercase tracking-wider text-sky-400 block">Cloud Sync Account</span>
+          <h3 id="authModalTitle" class="font-extrabold text-base">사용자 로그인 · 클라우드 동기화</h3>
+        </div>
+        <button type="button" onclick="closeAuthModal()" class="text-slate-400 hover:text-white text-2xl leading-none px-1 cursor-pointer">&times;</button>
+      </div>
+
+      <!-- 비로그인 상태 뷰 -->
+      <div id="authLoggedOutBody" class="p-5 space-y-4">
+        <button type="button" onclick="signInWithGoogle()" class="w-full py-2.5 px-4 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-xs font-extrabold flex items-center justify-center gap-2 shadow-xs transition cursor-pointer">
+          <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17Z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.14C3.26 21.3 7.31 24 12 24Z"/><path fill="#FBBC05" d="M5.28 14.24c-.24-.72-.38-1.49-.38-2.24s.14-1.52.38-2.24V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.99-3.14Z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.99 3.14c.95-2.85 3.6-4.96 6.72-4.96Z"/></svg>
+          Google 계정으로 계속하기
+        </button>
+
+        <div class="relative flex items-center justify-center">
+          <div class="border-t border-slate-200 w-full"></div>
+          <span class="bg-white px-2.5 text-[11px] font-bold text-slate-400 no-wrap">또는 이메일로 로그인</span>
+          <div class="border-t border-slate-200 w-full"></div>
+        </div>
+
+        <div class="space-y-3">
+          <div>
+            <label for="authEmailInput" class="block text-xs font-extrabold text-slate-700 mb-1">이메일 주소</label>
+            <input id="authEmailInput" type="email" autocomplete="email" placeholder="example@gmail.com" class="form-control" />
+          </div>
+          <div>
+            <label for="authPasswordInput" class="block text-xs font-extrabold text-slate-700 mb-1">비밀번호 (6자 이상)</label>
+            <input id="authPasswordInput" type="password" autocomplete="current-password" placeholder="••••••••" class="form-control" onkeydown="if(event.key==='Enter'){ event.preventDefault(); signInWithEmail(); }" />
+          </div>
+        </div>
+
+        <div id="authErrorBox" class="hidden rounded-xl p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold"></div>
+
+        <div class="grid grid-cols-2 gap-2 pt-1">
+          <button type="button" onclick="signInWithEmail()" class="py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold shadow-xs transition cursor-pointer">
+            이메일 로그인
+          </button>
+          <button type="button" onclick="registerWithEmail()" class="py-2.5 rounded-xl border border-slate-300 bg-slate-50 hover:bg-slate-100 text-slate-800 text-xs font-extrabold transition cursor-pointer">
+            신규 회원가입
+          </button>
+        </div>
+      </div>
+
+      <!-- 로그인 완료 상태 뷰 -->
+      <div id="authLoggedInBody" class="hidden p-5 space-y-4">
+        <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5 space-y-1">
+          <div class="text-[11px] font-extrabold text-emerald-700">클라우드 실시간 동기화 중</div>
+          <div id="authUserEmailDisplay" class="text-sm font-extrabold text-slate-900 break-all"></div>
+          <div id="authLastSyncDisplay" class="text-[11px] text-slate-500">개인별 고유 경로에 자동 저장됩니다.</div>
+        </div>
+
+        <div class="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+          <button type="button" onclick="forceSyncNow()" class="px-3.5 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-xs font-extrabold text-slate-700 cursor-pointer">
+            지금 동기화
+          </button>
+          <button type="button" onclick="signOutUser()" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-extrabold cursor-pointer">
+            로그아웃
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 모달 2: 신규 종목 추가 -->
+  <div id="addTickerModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4" onclick="if(event.target===this) closeAddTickerModal()">
+    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden" onclick="event.stopPropagation()">
+      <div class="px-5 py-4 bg-slate-900 text-white flex items-center justify-between">
+        <div>
+          <span class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400 block">Add New Ticker</span>
+          <h3 class="font-extrabold text-base">새 무한매수 종목 추가</h3>
+        </div>
+        <button type="button" onclick="closeAddTickerModal()" class="text-slate-400 hover:text-white text-2xl leading-none px-1 cursor-pointer">&times;</button>
+      </div>
+
+      <div class="p-5 space-y-4">
+        <div class="grid grid-cols-2 gap-3">
+          <div class="form-field">
+            <label for="newTickerSymbol" class="text-xs font-extrabold text-slate-700 mb-1">종목 티커 (Ticker)</label>
+            <input id="newTickerSymbol" type="text" maxlength="12" placeholder="예: SOXL, TQQQ" class="form-control uppercase font-extrabold text-blue-700" />
+          </div>
+          <div class="form-field">
+            <label for="newTickerAllocPct" class="text-xs font-extrabold text-indigo-700 mb-1">투자 비중 (%)</label>
+            <input id="newTickerAllocPct" type="number" step="0.1" min="0" max="100" value="50" class="form-control font-extrabold text-indigo-700 tabular-nums" oninput="updateNewTickerCalcKrw()" />
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label for="newTickerCalcKrw" class="text-xs font-extrabold text-slate-700 mb-1">계산된 투자운영금 (원 · 수정불가)</label>
+          <input id="newTickerCalcKrw" type="text" readonly class="form-control font-bold tabular-nums" value="5,000,000" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div class="form-field">
+            <label for="newTickerSplits" class="text-xs font-extrabold text-slate-700 mb-1">분할수 (기본 40)</label>
+            <input id="newTickerSplits" type="number" min="10" max="100" value="40" class="form-control font-bold tabular-nums" />
+          </div>
+          <div class="form-field">
+            <label for="newTickerTargetQty" class="text-xs font-extrabold text-slate-700 mb-1">일일 목표 수량 (주)</label>
+            <input id="newTickerTargetQty" type="number" min="1" max="1000" value="4" class="form-control font-bold tabular-nums" />
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+          <button type="button" onclick="closeAddTickerModal()" class="px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer">취소</button>
+          <button type="button" onclick="confirmAddTicker()" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold shadow-sm cursor-pointer">+ 종목 추가하기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 모달 3: 실시간 시세 API 설정 -->
   <div id="apiModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4" onclick="if(event.target===this) closeApiModal()">
     <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden" onclick="event.stopPropagation()">
       <div class="px-5 py-4 bg-slate-900 text-white flex items-center justify-between">
         <div>
           <span class="text-[10px] font-extrabold uppercase tracking-wider text-sky-400 block">Live Quote API</span>
-          <h3 class="font-extrabold text-base">실시간 시세 API 설정</h3>
+          <h3 class="font-extrabold text-base">실시간 시세 API 설정 (개인 키)</h3>
         </div>
         <button type="button" onclick="closeApiModal()" class="text-slate-400 hover:text-white text-2xl leading-none px-1 cursor-pointer">&times;</button>
       </div>
 
       <div class="p-5 space-y-4">
-        <!-- 3분할 카드 버튼 제공사 선택기 -->
         <div>
           <label class="block text-xs font-extrabold text-slate-700 mb-2">데이터 제공사 선택</label>
           <div class="grid grid-cols-3 gap-2">
@@ -634,10 +741,9 @@
           </div>
         </div>
 
-        <!-- API Key 입력 영역 -->
         <div id="apiKeyInputSection" class="space-y-2 transition-opacity">
           <div class="flex items-center justify-between">
-            <label for="apiKeyInput" class="text-xs font-extrabold text-slate-700">개인 API Key 입력</label>
+            <label for="apiKeyInput" class="text-xs font-extrabold text-slate-700">본인 API Key 입력</label>
             <a id="apiHelpLink" href="https://twelvedata.com/pricing" target="_blank" rel="noopener noreferrer" class="text-[11px] text-blue-600 hover:underline font-bold">무료 키 발급받기 ↗</a>
           </div>
           <div class="flex gap-2">
@@ -646,13 +752,11 @@
               표시
             </button>
           </div>
-          <p id="apiProviderDesc" class="text-[11px] text-slate-500 leading-relaxed">Twelve Data 무료 키는 일 800회 호출 및 미국 ETF/주식 실시간 시세와 USD/KRW 환율을 지원합니다.</p>
+          <p id="apiProviderDesc" class="text-[11px] text-slate-500 leading-relaxed">Twelve Data 무료 키는 일 800회 호출 및 미국 ETF/주식 실시간 시세와 USD/KRW 환율을 지원합니다. 로그인 시 본인 클라우드 계정에 저장됩니다.</p>
         </div>
 
-        <!-- 연결 테스트 인라인 결과 -->
         <div id="apiTestResult" class="hidden rounded-xl p-3 text-xs font-bold"></div>
 
-        <!-- 하단 버튼 -->
         <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
           <button type="button" onclick="testApiConnection()" class="px-4 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-xs font-extrabold text-slate-700 transition cursor-pointer">
             연결 테스트
@@ -665,7 +769,7 @@
     </div>
   </div>
 
-  <!-- 모달 2: 매매 메모 전체보기 및 수정 -->
+  <!-- 모달 4: 매매 메모 전체보기 및 수정 -->
   <div id="memoModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4" onclick="if(event.target===this) closeMemoModal()">
     <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden" onclick="event.stopPropagation()">
       <div class="px-5 py-3.5 bg-slate-800 text-white flex items-center justify-between">
@@ -683,191 +787,349 @@
     </div>
   </div>
 
-  <!-- 모달 3: 신규 종목 추가 -->
-  <div id="addTickerModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4" onclick="if(event.target===this) closeAddTickerModal()">
-    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden" onclick="event.stopPropagation()">
-      <div class="px-5 py-4 bg-slate-900 text-white flex items-center justify-between">
-        <div>
-          <span class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400 block">Add New Ticker</span>
-          <h3 class="font-extrabold text-base">신규 무한매수 종목 추가</h3>
-        </div>
-        <button type="button" onclick="closeAddTickerModal()" class="text-slate-400 hover:text-white text-2xl leading-none px-1 cursor-pointer">&times;</button>
-      </div>
-
-      <div class="p-5 space-y-3.5">
-        <div class="grid grid-cols-2 gap-3">
-          <div class="form-field">
-            <label for="newTickerSymbol" class="text-xs font-extrabold text-slate-700 mb-1">종목 티커 (Ticker)</label>
-            <input id="newTickerSymbol" type="text" maxlength="12" placeholder="예: TQQQ" class="form-control uppercase font-extrabold text-blue-700" />
-          </div>
-          <div class="form-field">
-            <label for="newTickerAllocPct" class="text-xs font-extrabold text-indigo-700 mb-1">총 원금 투자 비중 (%)</label>
-            <input id="newTickerAllocPct" type="number" step="0.1" min="0" max="100" value="30" oninput="previewNewTickerCapital()" class="form-control font-extrabold text-indigo-700 tabular-nums" />
-          </div>
-        </div>
-
-        <div class="form-field">
-          <label for="newTickerKrw" class="text-xs font-extrabold text-slate-700 mb-1">투자운영금 (원 · 총 투자원금 × 투자 비중 자동계산)</label>
-          <input id="newTickerKrw" type="text" inputmode="numeric" readonly tabindex="-1" value="3,000,000" class="form-control font-bold tabular-nums bg-slate-100 text-slate-600 cursor-not-allowed select-none" />
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <div class="form-field">
-            <label for="newTickerSplits" class="text-xs font-extrabold text-slate-700 mb-1">분할수 (기본 40)</label>
-            <input id="newTickerSplits" type="number" min="10" max="100" value="40" class="form-control font-bold tabular-nums" />
-          </div>
-          <div class="form-field">
-            <label for="newTickerTargetQty" class="text-xs font-extrabold text-slate-700 mb-1">일일 목표수량 (주)</label>
-            <input id="newTickerTargetQty" type="number" min="1" value="4" class="form-control font-bold tabular-nums" />
-          </div>
-        </div>
-
-        <p id="newTickerHelperText" class="text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-xl border border-slate-200 tabular-nums">
-          현재 총 투자원금 10,000,000원 기준 30% = 3,000,000원 배정
-        </p>
-
-        <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
-          <button type="button" onclick="closeAddTickerModal()" class="px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer">취소</button>
-          <button type="button" onclick="confirmAddTicker()" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold shadow-sm cursor-pointer">+ 종목 추가하기</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- 하단 토스트 알림 -->
   <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg opacity-0 pointer-events-none transition-opacity z-50 no-wrap"></div>
 
-  <script>
-    /**
-     * 샌드박스 / iPad Safari 보안 제한 대비 안전 저장소
-     */
+  <!-- Firebase SDK & 애플리케이션 스크립트 -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+    import {
+      getAuth,
+      onAuthStateChanged,
+      GoogleAuthProvider,
+      signInWithPopup,
+      signInWithEmailAndPassword,
+      createUserWithEmailAndPassword,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+    import {
+      getFirestore,
+      doc,
+      getDoc,
+      setDoc,
+      onSnapshot
+    } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+    // =========================================================================
+    // Firebase 프로젝트 설정값 (mytuja-dashboard)
+    // =========================================================================
+    const FIREBASE_CONFIG = {
+      apiKey: "AIzaSyAUJCGY8QiWqPfsLkQCjzlwM9gA1rs28XY",
+      authDomain: "mytuja-dashboard.firebaseapp.com",
+      projectId: "mytuja-dashboard",
+      storageBucket: "mytuja-dashboard.firebasestorage.app",
+      messagingSenderId: "148768649627",
+      appId: "1:148768649627:web:4c0aa8479f234f1a9e713e"
+    };
+
     const memoryStore = {};
     const safeStorage = {
       getItem(k) {
-        try {
-          return window.localStorage.getItem(k);
-        } catch (e) {
-          return Object.prototype.hasOwnProperty.call(memoryStore, k) ? memoryStore[k] : null;
-        }
+        try { return window.localStorage.getItem(k); }
+        catch (e) { return Object.prototype.hasOwnProperty.call(memoryStore, k) ? memoryStore[k] : null; }
       },
       setItem(k, v) {
         memoryStore[k] = v;
-        try {
-          window.localStorage.setItem(k, v);
-        } catch (e) {}
+        try { window.localStorage.setItem(k, v); } catch (e) {}
       }
     };
 
     const STORAGE_KEY = 'laor_infinite_buy_multi_v1';
-    const LEGACY_STORAGE_KEY = 'laor_infinite_buy_state_v8';
 
-    function createDefaultSoxlTicker() {
+    function createTickerItem(ticker, allocPct, totalKrw, rate, splits = 40, targetQty = 4) {
+      const krw = Math.round(totalKrw * (allocPct / 100));
+      const usd = rate > 0 ? Number((krw / rate).toFixed(2)) : 0;
       return {
-        id: 'ticker_soxl_default',
+        id: 'tk_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
         config: {
-          ticker: 'SOXL',
-          allocPct: 100,
-          krwCapital: 10000000,
-          exchangeRate: 1336,
-          usdCapital: 7485.03,
-          splits: 40,
-          orderMode: 'fixed', // 'fixed' | 'amount'
-          targetQty: 4,
-          currentPrice: 48.21
+          ticker: ticker.toUpperCase(),
+          allocPct: Number(allocPct) || 0,
+          krwCapital: krw,
+          exchangeRate: rate,
+          usdCapital: usd,
+          splits: splits,
+          orderMode: 'fixed',
+          targetQty: targetQty,
+          currentPrice: 0
         },
-        transactions: [
-          {
-            id: 'tx_init_1',
-            date: '2026-11-17',
-            type: 'BUY',
-            price: 48.21,
-            qty: 4,
-            tMode: 'AUTO',
-            customT: 1.0,
-            memo: '무한매수법 1일차 시작 (4주 @ $48.21 매수 체결 완료 - 1.0 & 4.0 동시 추적)'
-          }
-        ]
+        transactions: []
       };
     }
 
-    const DEFAULT_STATE = {
-      totalKrwCapital: 10000000,
-      globalExchangeRate: 1336,
-      activeTab: 'ticker_soxl_default', // 'OVERVIEW' or ticker id
-      api: {
-        provider: 'twelvedata', // 'twelvedata' | 'finnhub' | 'none'
-        key: '1b21ff07c1d744388afedc6c1f5ec87c'
-      },
-      tickers: [createDefaultSoxlTicker()]
-    };
+    function getInitialState() {
+      const defaultTotalKrw = 10000000;
+      const defaultRate = 1336;
+      const firstTicker = createTickerItem('SOXL', 100, defaultTotalKrw, defaultRate, 40, 4);
+      return {
+        totalPortfolioKrw: defaultTotalKrw,
+        globalExchangeRate: defaultRate,
+        activeView: 'OVERVIEW',
+        api: {
+          provider: 'twelvedata',
+          key: ''
+        },
+        tickers: [firstTicker]
+      };
+    }
 
-    let state = loadState();
+    let state = loadLocalState();
     let editingMemoTxId = null;
     let selectedModalProvider = state.api.provider || 'twelvedata';
 
-    function loadState() {
+    // Firebase 상태 변수
+    let fbApp = null;
+    let fbAuth = null;
+    let fbDb = null;
+    let currentUser = null;
+    let unsubscribeSnapshot = null;
+    let isApplyingRemote = false;
+    let cloudSaveTimer = null;
+
+    function isFirebaseConfigured() {
+      return FIREBASE_CONFIG &&
+        FIREBASE_CONFIG.apiKey &&
+        !FIREBASE_CONFIG.apiKey.startsWith('YOUR_');
+    }
+
+    function loadLocalState() {
       try {
         const raw = safeStorage.getItem(STORAGE_KEY);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed.tickers) && parsed.tickers.length > 0) {
-            return {
-              totalKrwCapital: Number(parsed.totalKrwCapital) || 10000000,
-              globalExchangeRate: Number(parsed.globalExchangeRate) || 1336,
-              activeTab: parsed.activeTab || parsed.tickers[0].id,
-              api: {
-                provider: (parsed.api && parsed.api.provider) ? parsed.api.provider : DEFAULT_STATE.api.provider,
-                key: (parsed.api && parsed.api.key) ? parsed.api.key : DEFAULT_STATE.api.key
-              },
-              tickers: parsed.tickers.map(t => ({
-                id: t.id || ('ticker_' + Math.random().toString(36).slice(2, 7)),
-                config: {
-                  ...createDefaultSoxlTicker().config,
-                  ...(t.config || {})
-                },
-                transactions: Array.isArray(t.transactions) ? t.transactions : []
-              }))
-            };
-          }
-        }
-
-        // 이전 단일 종목 localStorage 데이터 마이그레이션
-        const legacyRaw = safeStorage.getItem(LEGACY_STORAGE_KEY);
-        if (legacyRaw) {
-          const leg = JSON.parse(legacyRaw);
-          const legCfg = { ...createDefaultSoxlTicker().config, ...(leg.config || {}), allocPct: 100 };
-          const migratedTicker = {
-            id: 'ticker_soxl_default',
-            config: legCfg,
-            transactions: Array.isArray(leg.transactions) ? leg.transactions : createDefaultSoxlTicker().transactions
-          };
-          return {
-            totalKrwCapital: Number(legCfg.krwCapital) || 10000000,
-            globalExchangeRate: Number(legCfg.exchangeRate) || 1336,
-            activeTab: 'ticker_soxl_default',
-            api: {
-              provider: (leg.api && leg.api.provider) ? leg.api.provider : DEFAULT_STATE.api.provider,
-              key: (leg.api && leg.api.key) ? leg.api.key : DEFAULT_STATE.api.key
-            },
-            tickers: [migratedTicker]
-          };
-        }
-      } catch (e) {}
-      return JSON.parse(JSON.stringify(DEFAULT_STATE));
+        if (!raw) return getInitialState();
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed.tickers)) return getInitialState();
+        return {
+          totalPortfolioKrw: Number(parsed.totalPortfolioKrw) || 10000000,
+          globalExchangeRate: Number(parsed.globalExchangeRate) || 1336,
+          activeView: parsed.activeView || 'OVERVIEW',
+          api: {
+            provider: (parsed.api && parsed.api.provider) ? parsed.api.provider : 'twelvedata',
+            key: (parsed.api && parsed.api.key) ? parsed.api.key : ''
+          },
+          tickers: parsed.tickers
+        };
+      } catch (e) {
+        return getInitialState();
+      }
     }
 
     function saveState() {
       safeStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      if (currentUser && fbDb && !isApplyingRemote) {
+        scheduleCloudSave();
+      }
     }
 
-    function getActiveTickerObj() {
-      if (state.activeTab === 'OVERVIEW') {
-        return state.tickers[0];
+    function scheduleCloudSave() {
+      setCloudStatus('syncing', '클라우드 저장 중...');
+      clearTimeout(cloudSaveTimer);
+      cloudSaveTimer = setTimeout(() => {
+        pushStateToCloud();
+      }, 450);
+    }
+
+    async function pushStateToCloud() {
+      if (!currentUser || !fbDb) return;
+      try {
+        const userDocRef = doc(fbDb, 'users', currentUser.uid, 'infiniteBuy', 'portfolio');
+        const payload = JSON.parse(JSON.stringify(state));
+        payload.updatedAt = new Date().toISOString();
+        await setDoc(userDocRef, payload, { merge: true });
+        const timeStr = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        setCloudStatus('synced', `동기화 완료 (${timeStr})`);
+        const syncDisp = document.getElementById('authLastSyncDisplay');
+        if (syncDisp) syncDisp.textContent = `마지막 클라우드 저장: ${timeStr}`;
+      } catch (err) {
+        console.error('Firestore 저장 오류:', err);
+        setCloudStatus('error', '저장 오류 (규칙 확인)');
+        showToast('클라우드 저장 실패: ' + err.message);
       }
-      const found = state.tickers.find(t => t.id === state.activeTab);
-      if (found) return found;
-      state.activeTab = state.tickers[0].id;
-      return state.tickers[0];
+    }
+
+    function setCloudStatus(status, text) {
+      const dot = document.getElementById('cloudSyncDot');
+      const txt = document.getElementById('cloudSyncText');
+      if (!dot || !txt) return;
+      txt.textContent = text;
+      if (status === 'synced') {
+        dot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+        txt.className = 'text-emerald-300';
+      } else if (status === 'syncing') {
+        dot.className = 'w-2 h-2 rounded-full bg-sky-400 animate-pulse';
+        txt.className = 'text-sky-300';
+      } else if (status === 'error') {
+        dot.className = 'w-2 h-2 rounded-full bg-rose-400';
+        txt.className = 'text-rose-300';
+      } else {
+        dot.className = 'w-2 h-2 rounded-full bg-slate-400';
+        txt.className = 'text-slate-300';
+      }
+    }
+
+    function initFirebase() {
+      if (!isFirebaseConfigured()) {
+        setCloudStatus('local', 'Firebase 키 미설정');
+        document.getElementById('authHeaderBtnText').textContent = '클라우드 미연결';
+        return;
+      }
+
+      try {
+        fbApp = initializeApp(FIREBASE_CONFIG);
+        fbAuth = getAuth(fbApp);
+        fbDb = getFirestore(fbApp);
+
+        onAuthStateChanged(fbAuth, async (user) => {
+          currentUser = user;
+          if (unsubscribeSnapshot) {
+            unsubscribeSnapshot();
+            unsubscribeSnapshot = null;
+          }
+
+          const banner = document.getElementById('guestNoticeBanner');
+          const authBtnText = document.getElementById('authHeaderBtnText');
+          const loggedOutBody = document.getElementById('authLoggedOutBody');
+          const loggedInBody = document.getElementById('authLoggedInBody');
+
+          if (user) {
+            banner.classList.add('hidden');
+            const label = user.email ? user.email.split('@')[0] : '내 계정';
+            authBtnText.textContent = `👤 ${label}`;
+            loggedOutBody.classList.add('hidden');
+            loggedInBody.classList.remove('hidden');
+            document.getElementById('authUserEmailDisplay').textContent = user.email || user.uid;
+            setCloudStatus('syncing', '데이터 불러오는 중...');
+
+            const userDocRef = doc(fbDb, 'users', user.uid, 'infiniteBuy', 'portfolio');
+            const snap = await getDoc(userDocRef);
+
+            if (!snap.exists()) {
+              await pushStateToCloud();
+            }
+
+            unsubscribeSnapshot = onSnapshot(userDocRef, (docSnap) => {
+              if (!docSnap.exists()) return;
+              const remote = docSnap.data();
+              isApplyingRemote = true;
+              try {
+                state = {
+                  totalPortfolioKrw: Number(remote.totalPortfolioKrw) || 10000000,
+                  globalExchangeRate: Number(remote.globalExchangeRate) || 1336,
+                  activeView: state.activeView || remote.activeView || 'OVERVIEW',
+                  api: {
+                    provider: (remote.api && remote.api.provider) ? remote.api.provider : 'twelvedata',
+                    key: (remote.api && remote.api.key) ? remote.api.key : ''
+                  },
+                  tickers: Array.isArray(remote.tickers) ? remote.tickers : []
+                };
+                safeStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+                renderAll();
+                setCloudStatus('synced', '클라우드 동기화됨');
+              } finally {
+                isApplyingRemote = false;
+              }
+            }, (err) => {
+              console.error('Snapshot 오류:', err);
+              setCloudStatus('error', '동기화 권한 오류');
+            });
+          } else {
+            banner.classList.remove('hidden');
+            authBtnText.textContent = '로그인 / 회원가입';
+            loggedOutBody.classList.remove('hidden');
+            loggedInBody.classList.add('hidden');
+            setCloudStatus('local', '로컬 모드');
+          }
+        });
+      } catch (e) {
+        console.error('Firebase 초기화 실패:', e);
+        setCloudStatus('error', 'Firebase 설정 오류');
+      }
+    }
+
+    // 인증 모달 함수들
+    function openAuthModal() {
+      if (!isFirebaseConfigured()) {
+        showToast('index.html 상단의 FIREBASE_CONFIG에 본인의 Firebase 키를 먼저 입력해 주세요.');
+        return;
+      }
+      document.getElementById('authErrorBox').classList.add('hidden');
+      const modal = document.getElementById('authModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeAuthModal() {
+      const modal = document.getElementById('authModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function showAuthError(msg) {
+      const box = document.getElementById('authErrorBox');
+      box.textContent = msg;
+      box.classList.remove('hidden');
+    }
+
+    async function signInWithGoogle() {
+      if (!fbAuth) return;
+      try {
+        const provider = new GoogleAuthProvider();
+        await signInWithPopup(fbAuth, provider);
+        closeAuthModal();
+        showToast('Google 계정으로 로그인되었습니다.');
+      } catch (e) {
+        showAuthError('Google 로그인 실패: ' + e.message);
+      }
+    }
+
+    async function signInWithEmail() {
+      if (!fbAuth) return;
+      const email = document.getElementById('authEmailInput').value.trim();
+      const pw = document.getElementById('authPasswordInput').value;
+      if (!email || !pw) {
+        showAuthError('이메일과 비밀번호를 입력해 주세요.');
+        return;
+      }
+      try {
+        await signInWithEmailAndPassword(fbAuth, email, pw);
+        closeAuthModal();
+        showToast('로그인되었습니다.');
+      } catch (e) {
+        showAuthError('로그인 실패: 이메일 또는 비밀번호를 확인해 주세요.');
+      }
+    }
+
+    async function registerWithEmail() {
+      if (!fbAuth) return;
+      const email = document.getElementById('authEmailInput').value.trim();
+      const pw = document.getElementById('authPasswordInput').value;
+      if (!email || pw.length < 6) {
+        showAuthError('이메일과 6자 이상의 비밀번호를 입력해 주세요.');
+        return;
+      }
+      try {
+        await createUserWithEmailAndPassword(fbAuth, email, pw);
+        closeAuthModal();
+        showToast('회원가입 및 클라우드 연결이 완료되었습니다.');
+      } catch (e) {
+        showAuthError('회원가입 실패: ' + e.message);
+      }
+    }
+
+    async function signOutUser() {
+      if (!fbAuth) return;
+      await signOut(fbAuth);
+      closeAuthModal();
+      showToast('로그아웃되었습니다.');
+    }
+
+    function forceSyncNow() {
+      pushStateToCloud();
+      showToast('클라우드로 현재 데이터를 동기화했습니다.');
+    }
+
+    // 유틸리티 및 포트폴리오 계산
+    function getActiveTickerObj() {
+      if (state.activeView === 'OVERVIEW') return null;
+      return state.tickers.find(t => t.id === state.activeView) || state.tickers[0] || null;
     }
 
     function showToast(msg) {
@@ -875,7 +1137,7 @@
       el.textContent = msg;
       el.classList.remove('opacity-0');
       clearTimeout(el._timer);
-      el._timer = setTimeout(() => el.classList.add('opacity-0'), 2400);
+      el._timer = setTimeout(() => el.classList.add('opacity-0'), 2600);
     }
 
     function fmtUsd(val) {
@@ -896,9 +1158,7 @@
     function formatDecimalCommaInput(el) {
       let cleaned = String(el.value).replace(/[^0-9.]/g, '');
       const parts = cleaned.split('.');
-      if (parts.length > 2) {
-        cleaned = parts[0] + '.' + parts.slice(1).join('');
-      }
+      if (parts.length > 2) cleaned = parts[0] + '.' + parts.slice(1).join('');
       const [intPart, decPart] = cleaned.split('.');
       const formattedInt = intPart ? Number(intPart).toLocaleString('en-US') : '';
       el.value = decPart !== undefined ? `${formattedInt}.${decPart}` : formattedInt;
@@ -917,10 +1177,6 @@
         .replace(/"/g, '&quot;');
     }
 
-    /**
-     * 자전거래(통정매매) 의심 주문 거절 방지 헬퍼:
-     * 매수 주문 단가가 최저 매도 주문 단가 이상인 경우 (최저 매도가 - $0.01)로 상한 제한
-     */
     function capBuyPrice(rawBuyPrice, minSellPrice) {
       const buy = Number((Number(rawBuyPrice) || 0).toFixed(2));
       if (typeof minSellPrice !== 'number' || isNaN(minSellPrice) || minSellPrice <= 0) {
@@ -928,10 +1184,7 @@
       }
       const sell = Number(minSellPrice.toFixed(2));
       if (buy >= sell) {
-        return {
-          price: Number(Math.max(0.01, sell - 0.01).toFixed(2)),
-          capped: true
-        };
+        return { price: Number(Math.max(0.01, sell - 0.01).toFixed(2)), capped: true };
       }
       return { price: buy, capped: false };
     }
@@ -941,14 +1194,13 @@
       return `<span class="ml-1.5 px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300 text-[10px] font-extrabold no-wrap" title="매수가가 매도가 이상이면 자전거래 의심으로 거절되므로 최저 매도가 - $0.01로 자동 제한되었습니다">자전방지 상한적용</span>`;
     }
 
-    // 특정 종목 객체 기준 포트폴리오 계산
-    function computePortfolioForTicker(tickerObj) {
+    function computePortfolio(tickerObj) {
       const cfg = tickerObj.config;
       let totalQty = 0;
       let totalCost = 0;
       let cash = Number(cfg.usdCapital) || 0;
       let realizedPnL = 0;
-      let realizedCostBasis = 0;
+      let totalSoldCost = 0;
       let tValue = 0;
       let cumulativeBuyAmount = 0;
 
@@ -974,11 +1226,11 @@
           tValue = Math.max(0, Number((tValue + tDelta).toFixed(2)));
         } else if (tx.type === 'SELL_PART') {
           const sellQty = Math.min(totalQty, qty);
-          const costSold = avgBefore * sellQty;
+          const soldCost = avgBefore * sellQty;
           const pnl = (price - avgBefore) * sellQty;
           realizedPnL += pnl;
-          realizedCostBasis += costSold;
-          totalCost = Math.max(0, totalCost - costSold);
+          totalSoldCost += soldCost;
+          totalCost = Math.max(0, totalCost - soldCost);
           totalQty -= sellQty;
           cash += price * sellQty;
 
@@ -989,10 +1241,10 @@
           }
         } else if (tx.type === 'SELL_ALL') {
           const sellQty = totalQty > 0 ? totalQty : qty;
-          const costSold = avgBefore * sellQty;
+          const soldCost = avgBefore * sellQty;
           const pnl = (price - avgBefore) * sellQty;
           realizedPnL += pnl;
-          realizedCostBasis += costSold;
+          totalSoldCost += soldCost;
           totalCost = 0;
           totalQty = 0;
           cash += price * sellQty;
@@ -1019,7 +1271,10 @@
       const evalValue = curPrice * totalQty;
       const evalPnL = totalQty > 0 ? (curPrice - avgPrice) * totalQty : 0;
       const evalPct = avgPrice > 0 && totalQty > 0 ? ((curPrice - avgPrice) / avgPrice) * 100 : 0;
-      const realizedPct = realizedCostBasis > 0 ? (realizedPnL / realizedCostBasis) * 100 : 0;
+      const totalCombinedPnL = evalPnL + realizedPnL;
+      const usdCap = Number(cfg.usdCapital) || 0;
+      const capitalReturnPct = usdCap > 0 ? (totalCombinedPnL / usdCap) * 100 : 0;
+      const realizedReturnPct = totalSoldCost > 0 ? (realizedPnL / totalSoldCost) * 100 : 0;
 
       return {
         totalQty,
@@ -1027,28 +1282,26 @@
         avgPrice,
         cash,
         realizedPnL,
-        realizedCostBasis,
-        realizedPct,
+        totalSoldCost,
+        realizedReturnPct,
         tValue,
         cumulativeBuyAmount,
         curPrice,
         evalValue,
         evalPnL,
         evalPct,
+        totalCombinedPnL,
+        capitalReturnPct,
         rows
       };
     }
 
-    /**
-     * Ver 1.0 & Ver 4.0 다음 날 주문 계산 (자전거래 방지 상한 capBuyPrice 공통 사용)
-     */
     function calculateOrdersData(tickerObj, p) {
       const cfg = tickerObj.config;
       const splits = Math.max(10, Number(cfg.splits) || 40);
-      const baseAvg = p.avgPrice > 0 ? p.avgPrice : (Number(cfg.currentPrice) || 48.21);
+      const baseAvg = p.avgPrice > 0 ? p.avgPrice : (Number(cfg.currentPrice) || 0);
       const targetQty = Math.max(1, Number(cfg.targetQty) || 4);
 
-      // --- Ver 1.0 산출 ---
       const v1UnitBudget = cfg.usdCapital / splits;
       const v1Round = v1UnitBudget > 0 ? (p.cumulativeBuyAmount / v1UnitBudget) : 0;
       const v1HalfQty = Math.floor(targetQty / 2);
@@ -1062,7 +1315,6 @@
       const v1AvgBuy = capBuyPrice(baseAvg, v1MinSell);
       const v1BigBuy = capBuyPrice(baseAvg * 1.15, v1MinSell);
 
-      // --- Ver 4.0 산출 ---
       const remSplits = Math.max(1, splits - p.tValue);
       const v4UnitBudget = p.cash / remSplits;
       const starPct = (splits / 2 - p.tValue) * (40 / splits);
@@ -1118,207 +1370,189 @@
       };
     }
 
-    // 상단 네비게이션 탭 바 렌더링 (종합 투자현황 + 종목 탭들)
-    function renderTopNavTabs() {
-      const container = document.getElementById('topNavTabs');
-      const isOverview = state.activeTab === 'OVERVIEW';
+    function renderTickerTabs() {
+      const container = document.getElementById('tickerTabsContainer');
+      const isOverview = state.activeView === 'OVERVIEW';
 
-      const overviewTabHtml = `
-        <button type="button" onclick="switchTab('OVERVIEW')"
-          class="px-3.5 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition no-wrap cursor-pointer shrink-0 ${
-            isOverview
-              ? 'bg-indigo-600 text-white shadow-xs'
-              : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800'
-          }">
-          <span>📊</span>
-          <span>종합 투자현황</span>
+      const ovBtnClass = isOverview
+        ? 'bg-indigo-600 text-white shadow-xs font-extrabold'
+        : 'bg-slate-700/70 text-slate-300 hover:bg-slate-700 hover:text-white font-semibold';
+
+      let html = `
+        <button type="button" onclick="switchView('OVERVIEW')" class="px-3 py-1.5 rounded-xl text-xs transition flex items-center gap-1.5 no-wrap cursor-pointer ${ovBtnClass}">
+          <span>📊 종합 투자현황</span>
         </button>
       `;
 
-      const canDelete = state.tickers.length > 1;
-      const tickerTabsHtml = state.tickers.map(tObj => {
-        const isActive = state.activeTab === tObj.id;
-        const p = computePortfolioForTicker(tObj);
-        const allocPct = Number(tObj.config.allocPct) || 0;
-        const delBtn = canDelete
-          ? `<span onclick="event.stopPropagation(); deleteTickerTab('${tObj.id}')" title="${escapeHtml(tObj.config.ticker)} 종목 삭제"
-               class="ml-1 w-4 h-4 rounded-full inline-flex items-center justify-center text-[11px] leading-none hover:bg-rose-500 hover:text-white ${isActive ? 'text-slate-400' : 'text-slate-500'}">×</span>`
+      html += state.tickers.map(t => {
+        const isActive = state.activeView === t.id;
+        const p = computePortfolio(t);
+        const btnClass = isActive
+          ? 'bg-blue-600 text-white shadow-xs font-extrabold'
+          : 'bg-slate-700/70 text-slate-300 hover:bg-slate-700 hover:text-white font-semibold';
+        const badgeClass = isActive
+          ? 'bg-white/20 text-white'
+          : 'bg-slate-800 text-slate-300';
+        const allocPct = Number(t.config.allocPct) || 0;
+
+        const closeBtn = state.tickers.length > 1
+          ? `<span onclick="event.stopPropagation(); deleteTicker('${t.id}')" title="종목 삭제" class="ml-0.5 px-1 rounded hover:bg-rose-500/80 text-white/75 hover:text-white font-bold">×</span>`
           : '';
 
         return `
-          <div onclick="switchTab('${tObj.id}')" role="button" tabindex="0"
-            class="px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition no-wrap cursor-pointer shrink-0 select-none ${
-              isActive
-                ? 'bg-white text-slate-900 shadow-xs'
-                : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800'
-            }">
-            <span>${escapeHtml(tObj.config.ticker)}</span>
-            <span class="px-1.5 py-0.2 rounded text-[10px] font-bold ${isActive ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-800 text-indigo-300'}">${allocPct}%</span>
-            <span class="px-1.5 py-0.2 rounded text-[10px] font-bold ${isActive ? 'bg-slate-100 text-slate-700' : 'bg-slate-800 text-slate-400'}">${p.totalQty}주</span>
-            ${delBtn}
-          </div>
+          <button type="button" onclick="switchView('${t.id}')" class="px-3 py-1.5 rounded-xl text-xs transition flex items-center gap-1.5 no-wrap cursor-pointer ${btnClass}">
+            <span>${escapeHtml(t.config.ticker)}</span>
+            <span class="text-[10px] opacity-85 tabular-nums">${allocPct}%</span>
+            <span class="px-1.5 py-0.2 rounded-md text-[10px] tabular-nums ${badgeClass}">${p.totalQty}주</span>
+            ${closeBtn}
+          </button>
         `;
       }).join('');
 
-      container.innerHTML = overviewTabHtml + tickerTabsHtml;
+      container.innerHTML = html;
     }
 
-    function switchTab(tabId) {
-      state.activeTab = tabId;
-      saveState();
-      renderAll();
-    }
-
-    // 종합 투자현황 뷰 렌더링
-    function renderOverviewView() {
-      const totalKrw = Number(state.totalKrwCapital) || 0;
+    function renderOverview() {
+      const totalKrw = Number(state.totalPortfolioKrw) || 0;
       const globalRate = Number(state.globalExchangeRate) || 1336;
 
-      document.getElementById('ovTotalKrwInput').value = Math.round(totalKrw).toLocaleString('ko-KR');
-      document.getElementById('ovExchangeRateInput').value = formatDecimalNumber(globalRate, 2);
+      document.getElementById('totalPortfolioKrwInput').value = Math.round(totalKrw).toLocaleString('ko-KR');
+      document.getElementById('globalRateInput').value = formatDecimalNumber(globalRate, 2);
 
       let sumAllocPct = 0;
       let sumAllocKrw = 0;
-      let sumAllocUsd = 0;
-      let sumCostUsd = 0;
-      let sumEvalUsd = 0;
-      let sumUnrealizedUsd = 0;
-      let sumCashUsd = 0;
-      let sumRealizedUsd = 0;
-      let sumRealizedCostUsd = 0;
+      let sumUsdCap = 0;
+      let sumCost = 0;
+      let sumEval = 0;
+      let sumEvalPnl = 0;
+      let sumCash = 0;
+      let sumRealized = 0;
+      let sumSoldCost = 0;
 
-      const rowsHtml = state.tickers.map(tObj => {
-        const cfg = tObj.config;
-        const p = computePortfolioForTicker(tObj);
+      const rowsHtml = state.tickers.map(t => {
+        const cfg = t.config;
+        const p = computePortfolio(t);
         const allocPct = Number(cfg.allocPct) || 0;
-        const capUsd = Number(cfg.usdCapital) || 0;
-        const totalPnLUsd = p.evalPnL + p.realizedPnL;
-        const capYieldPct = capUsd > 0 ? (totalPnLUsd / capUsd) * 100 : 0;
+        const allocKrw = Math.round(totalKrw * (allocPct / 100));
 
         sumAllocPct += allocPct;
-        sumAllocKrw += Number(cfg.krwCapital) || 0;
-        sumAllocUsd += capUsd;
-        sumCostUsd += p.totalCost;
-        sumEvalUsd += p.evalValue;
-        sumUnrealizedUsd += p.evalPnL;
-        sumCashUsd += p.cash;
-        sumRealizedUsd += p.realizedPnL;
-        sumRealizedCostUsd += p.realizedCostBasis;
+        sumAllocKrw += allocKrw;
+        sumUsdCap += Number(cfg.usdCapital) || 0;
+        sumCost += p.totalCost;
+        sumEval += p.evalValue;
+        sumEvalPnl += p.evalPnL;
+        sumCash += p.cash;
+        sumRealized += p.realizedPnL;
+        sumSoldCost += p.totalSoldCost;
 
-        const signPct = p.evalPct > 0 ? '+' : '';
-        const signPnl = p.evalPnL > 0 ? '+' : '';
         const pnlColor = p.evalPnL > 0 ? 'text-emerald-600' : p.evalPnL < 0 ? 'text-rose-600' : 'text-slate-600';
-        const rSign = p.realizedPnL > 0 ? '+' : '';
-        const rPctSign = p.realizedPct > 0 ? '+' : '';
-        const rColor = p.realizedPnL > 0 ? 'text-emerald-600' : p.realizedPnL < 0 ? 'text-rose-600' : 'text-slate-600';
-        const cySign = capYieldPct > 0 ? '+' : '';
-        const cyColor = capYieldPct > 0 ? 'text-emerald-600' : capYieldPct < 0 ? 'text-rose-600' : 'text-slate-600';
+        const pnlSign = p.evalPnL > 0 ? '+' : '';
+        const capRetColor = p.capitalReturnPct > 0 ? 'text-emerald-600' : p.capitalReturnPct < 0 ? 'text-rose-600' : 'text-slate-600';
+        const capRetSign = p.capitalReturnPct > 0 ? '+' : '';
+        const realColor = p.realizedPnL > 0 ? 'text-emerald-600' : p.realizedPnL < 0 ? 'text-rose-600' : 'text-slate-600';
+        const realSign = p.realizedPnL > 0 ? '+' : '';
+        const realRetSign = p.realizedReturnPct > 0 ? '+' : '';
 
         return `
-          <tr onclick="switchTab('${tObj.id}')" class="hover:bg-indigo-50/50 transition cursor-pointer">
+          <tr onclick="switchView('${t.id}')" class="hover:bg-indigo-50/50 transition cursor-pointer">
             <td class="py-3 px-3 text-center font-extrabold text-blue-700 no-wrap">${escapeHtml(cfg.ticker)}</td>
-            <td class="py-3 px-3 text-center font-extrabold text-indigo-700 no-wrap">${allocPct.toFixed(1)}%</td>
-            <td class="py-3 px-3 text-right font-semibold text-slate-700 no-wrap">
-              ${fmtKrw(cfg.krwCapital)} <span class="text-slate-400 text-[11px]">(${fmtUsd(cfg.usdCapital)})</span>
-            </td>
-            <td class="py-3 px-3 text-right font-bold text-slate-900 no-wrap">${fmtUsd(p.curPrice)}</td>
-            <td class="py-3 px-3 text-right font-bold text-slate-800 no-wrap">${p.totalQty.toLocaleString()}주</td>
-            <td class="py-3 px-3 text-right font-bold text-blue-600 no-wrap">${p.totalQty > 0 ? fmtUsd(p.avgPrice) : '-'}</td>
-            <td class="py-3 px-3 text-right font-extrabold ${pnlColor} no-wrap">
-              ${signPnl}${fmtUsd(p.evalPnL)} (${signPct}${p.evalPct.toFixed(2)}%)
-            </td>
-            <td class="py-3 px-3 text-right font-semibold text-slate-700 no-wrap">${fmtUsd(p.cash)}</td>
-            <td class="py-3 px-3 text-right font-bold ${rColor} no-wrap">${rSign}${fmtUsd(p.realizedPnL)} (${rPctSign}${p.realizedPct.toFixed(2)}%)</td>
-            <td class="py-3 px-3 text-right font-extrabold ${cyColor} no-wrap">${cySign}${capYieldPct.toFixed(2)}%</td>
-            <td class="py-3 px-3 text-center font-extrabold text-indigo-600 no-wrap">T = ${p.tValue.toFixed(2)} / ${cfg.splits}</td>
+            <td class="py-3 px-3 text-center font-bold text-indigo-700 no-wrap">${allocPct.toFixed(1)}%</td>
+            <td class="py-3 px-3 text-right font-semibold text-slate-700 no-wrap">${fmtUsd(cfg.usdCapital)}</td>
+            <td class="py-3 px-3 text-right font-bold text-slate-800 no-wrap">${fmtUsd(p.curPrice)}</td>
+            <td class="py-3 px-3 text-right font-bold text-slate-900 no-wrap">${p.totalQty.toLocaleString()}주</td>
+            <td class="py-3 px-3 text-right font-semibold text-blue-600 no-wrap">${fmtUsd(p.avgPrice)}</td>
+            <td class="py-3 px-3 text-right font-bold ${pnlColor} no-wrap">${pnlSign}${fmtUsd(p.evalPnL)} (${pnlSign}${p.evalPct.toFixed(2)}%)</td>
+            <td class="py-3 px-3 text-right font-medium text-slate-700 no-wrap">${fmtUsd(p.cash)}</td>
+            <td class="py-3 px-3 text-right font-extrabold ${capRetColor} no-wrap">${capRetSign}${p.capitalReturnPct.toFixed(2)}%</td>
+            <td class="py-3 px-3 text-right font-bold ${realColor} no-wrap">${realSign}${fmtUsd(p.realizedPnL)} (${realRetSign}${p.realizedReturnPct.toFixed(2)}%)</td>
+            <td class="py-3 px-3 text-center font-bold text-indigo-600 no-wrap">T ${p.tValue.toFixed(2)}</td>
           </tr>
         `;
       }).join('');
 
-      document.getElementById('overviewTableBody').innerHTML = rowsHtml;
-      document.getElementById('ovTickerCountBadge').textContent = `${state.tickers.length}종목`;
-
-      // 배분 진행률 바 업데이트
       const unallocKrw = totalKrw - sumAllocKrw;
-      const pctBadge = document.getElementById('ovAllocPctBadge');
-      const progBar = document.getElementById('ovAllocProgressBar');
+      document.getElementById('ovAllocPctText').textContent = `${sumAllocPct.toFixed(1)}%`;
+      document.getElementById('ovAllocatedKrw').textContent = fmtKrw(sumAllocKrw);
+      document.getElementById('ovUnallocatedKrw').textContent = fmtKrw(unallocKrw);
+
       const warnEl = document.getElementById('ovAllocWarning');
-
-      pctBadge.textContent = `${sumAllocPct.toFixed(1)}%`;
-      document.getElementById('ovAllocatedKrwText').textContent = fmtKrw(sumAllocKrw);
-      document.getElementById('ovUnallocatedKrwText').textContent = fmtKrw(unallocKrw);
-
+      const barEl = document.getElementById('ovAllocProgressBar');
       if (sumAllocPct > 100.01) {
-        pctBadge.className = 'px-2 py-0.5 rounded-md bg-rose-100 text-rose-700 font-extrabold tabular-nums';
-        progBar.className = 'h-full bg-rose-500 rounded-full transition-all duration-300';
-        progBar.style.width = '100%';
         warnEl.classList.remove('hidden');
+        barEl.className = 'h-full bg-rose-500 rounded-full transition-all duration-300';
       } else {
-        pctBadge.className = 'px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-extrabold tabular-nums';
-        progBar.className = 'h-full bg-emerald-500 rounded-full transition-all duration-300';
-        progBar.style.width = `${Math.max(0, Math.min(100, sumAllocPct))}%`;
         warnEl.classList.add('hidden');
+        barEl.className = 'h-full bg-indigo-600 rounded-full transition-all duration-300';
       }
+      barEl.style.width = `${Math.min(100, Math.max(0, sumAllocPct))}%`;
 
-      // 6대 종합 KPI 카드 업데이트
-      const totalEvalPct = sumCostUsd > 0 ? (sumUnrealizedUsd / sumCostUsd) * 100 : 0;
-      const signTotPct = totalEvalPct > 0 ? '+' : '';
-      const signTotPnl = sumUnrealizedUsd > 0 ? '+' : '';
-      const signTotReal = sumRealizedUsd > 0 ? '+' : '';
+      const totalEvalPct = sumCost > 0 ? (sumEvalPnl / sumCost) * 100 : 0;
+      const evalSign = sumEvalPnl > 0 ? '+' : '';
+      const evalPctSign = totalEvalPct > 0 ? '+' : '';
 
-      document.getElementById('ovKpiCostUsd').textContent = fmtUsd(sumCostUsd);
-      document.getElementById('ovKpiCostKrw').textContent = `약 ${fmtKrw(sumCostUsd * globalRate)}`;
+      document.getElementById('ovKpiCost').textContent = fmtUsd(sumCost);
+      document.getElementById('ovKpiCostSub').textContent = `약 ${fmtKrw(sumCost * globalRate)}`;
 
-      const ovEvalEl = document.getElementById('ovKpiEvalUsd');
-      ovEvalEl.textContent = `${fmtUsd(sumEvalUsd)} (${signTotPct}${totalEvalPct.toFixed(2)}%)`;
-      ovEvalEl.className = `text-[15px] font-extrabold mt-1 tabular-nums no-wrap text-center ${sumUnrealizedUsd > 0 ? 'text-emerald-600' : sumUnrealizedUsd < 0 ? 'text-rose-600' : 'text-slate-800'}`;
-      document.getElementById('ovKpiEvalKrw').textContent = `약 ${fmtKrw(sumEvalUsd * globalRate)}`;
+      const ovEvalEl = document.getElementById('ovKpiEval');
+      ovEvalEl.textContent = `${fmtUsd(sumEval)} (${evalPctSign}${totalEvalPct.toFixed(2)}%)`;
+      ovEvalEl.className = `text-[15px] font-extrabold mt-1 tabular-nums no-wrap text-center ${sumEvalPnl > 0 ? 'text-emerald-600' : sumEvalPnl < 0 ? 'text-rose-600' : 'text-slate-800'}`;
+      document.getElementById('ovKpiEvalSub').textContent = `약 ${fmtKrw(sumEval * globalRate)}`;
 
-      const ovUnrEl = document.getElementById('ovKpiUnrealizedUsd');
-      ovUnrEl.textContent = `${signTotPnl}${fmtUsd(sumUnrealizedUsd)}`;
-      ovUnrEl.className = `text-[15px] font-extrabold mt-1 tabular-nums no-wrap text-center ${sumUnrealizedUsd > 0 ? 'text-emerald-600' : sumUnrealizedUsd < 0 ? 'text-rose-600' : 'text-slate-800'}`;
-      document.getElementById('ovKpiUnrealizedKrw').textContent = `약 ${signTotPnl}${fmtKrw(sumUnrealizedUsd * globalRate)}`;
+      const ovEvalPnlEl = document.getElementById('ovKpiEvalPnl');
+      ovEvalPnlEl.textContent = `${evalSign}${fmtUsd(sumEvalPnl)}`;
+      ovEvalPnlEl.className = `text-[15px] font-extrabold mt-1 tabular-nums no-wrap text-center ${sumEvalPnl > 0 ? 'text-emerald-600' : sumEvalPnl < 0 ? 'text-rose-600' : 'text-slate-800'}`;
+      document.getElementById('ovKpiEvalPnlSub').textContent = `약 ${fmtKrw(sumEvalPnl * globalRate)}`;
 
-      document.getElementById('ovKpiCashUsd').textContent = fmtUsd(sumCashUsd);
-      const totalRealizedPct = sumRealizedCostUsd > 0 ? (sumRealizedUsd / sumRealizedCostUsd) * 100 : 0;
-      const signTotRealPct = totalRealizedPct > 0 ? '+' : '';
-      const ovRealEl = document.getElementById('ovKpiRealizedUsd');
-      ovRealEl.textContent = `${signTotReal}${fmtUsd(sumRealizedUsd)} (${signTotRealPct}${totalRealizedPct.toFixed(2)}%)`;
-      ovRealEl.className = `text-[15px] font-extrabold mt-1 tabular-nums no-wrap text-center ${sumRealizedUsd > 0 ? 'text-emerald-600' : sumRealizedUsd < 0 ? 'text-rose-600' : 'text-slate-800'}`;
-      document.getElementById('ovKpiRealizedKrw').textContent = `약 ${signTotReal}${fmtKrw(sumRealizedUsd * globalRate)}`;
+      document.getElementById('ovKpiCash').textContent = fmtUsd(sumCash);
+      document.getElementById('ovKpiCashSub').textContent = `배정원금 ${fmtUsd(sumUsdCap)}`;
 
-      const totalCombinedPnL = sumUnrealizedUsd + sumRealizedUsd;
-      const totalCapYieldPct = sumAllocUsd > 0 ? (totalCombinedPnL / sumAllocUsd) * 100 : 0;
-      const signTotCapPct = totalCapYieldPct > 0 ? '+' : '';
-      const signTotComb = totalCombinedPnL > 0 ? '+' : '';
-      const ovCapYieldEl = document.getElementById('ovKpiCapYieldPct');
-      ovCapYieldEl.textContent = `${signTotCapPct}${totalCapYieldPct.toFixed(2)}%`;
-      ovCapYieldEl.className = `text-[15px] font-extrabold mt-1 tabular-nums no-wrap text-center ${totalCombinedPnL > 0 ? 'text-emerald-600' : totalCombinedPnL < 0 ? 'text-rose-600' : 'text-slate-800'}`;
-      document.getElementById('ovKpiCapYieldSub').textContent = `총손익 ${signTotComb}${fmtUsd(totalCombinedPnL)}`;
+      const sumTotalPnL = sumEvalPnl + sumRealized;
+      const sumCapReturnPct = sumUsdCap > 0 ? (sumTotalPnL / sumUsdCap) * 100 : 0;
+      const sumCapSign = sumCapReturnPct > 0 ? '+' : '';
+      const sumTotalPnlSign = sumTotalPnL > 0 ? '+' : '';
+      const ovCapRetEl = document.getElementById('ovKpiCapReturn');
+      ovCapRetEl.textContent = `${sumCapSign}${sumCapReturnPct.toFixed(2)}%`;
+      ovCapRetEl.className = `text-[15px] font-extrabold mt-1 tabular-nums no-wrap text-center ${sumTotalPnL > 0 ? 'text-emerald-600' : sumTotalPnL < 0 ? 'text-rose-600' : 'text-slate-800'}`;
+      document.getElementById('ovKpiCapReturnSub').textContent = `총손익 ${sumTotalPnlSign}${fmtUsd(sumTotalPnL)} / ${fmtUsd(sumUsdCap)}`;
+
+      const sumRealizedPct = sumSoldCost > 0 ? (sumRealized / sumSoldCost) * 100 : 0;
+      const realSign = sumRealized > 0 ? '+' : '';
+      const realPctSign = sumRealizedPct > 0 ? '+' : '';
+      const ovRealEl = document.getElementById('ovKpiRealized');
+      ovRealEl.textContent = `${realSign}${fmtUsd(sumRealized)} (${realPctSign}${sumRealizedPct.toFixed(2)}%)`;
+      ovRealEl.className = `text-[15px] font-extrabold mt-1 tabular-nums no-wrap text-center ${sumRealized > 0 ? 'text-emerald-600' : sumRealized < 0 ? 'text-rose-600' : 'text-slate-800'}`;
+      document.getElementById('ovKpiRealizedSub').textContent = `매도원금 ${fmtUsd(sumSoldCost)} · 약 ${fmtKrw(sumRealized * globalRate)}`;
+
+      document.getElementById('ovTickerCountBadge').textContent = `${state.tickers.length}종목`;
+      document.getElementById('overviewTableBody').innerHTML = rowsHtml || `<tr><td colspan="11" class="py-8 text-center text-slate-400">등록된 종목이 없습니다. 우측 상단 [+ 종목 추가] 버튼을 눌러 시작해 주세요.</td></tr>`;
     }
 
     function renderAll() {
-      renderTopNavTabs();
+      renderTickerTabs();
       updateApiBadge();
 
-      const overviewEl = document.getElementById('overviewView');
-      const detailEl = document.getElementById('tickerDetailView');
+      const ovView = document.getElementById('overviewView');
+      const dtView = document.getElementById('tickerDetailView');
 
-      if (state.activeTab === 'OVERVIEW') {
-        overviewEl.classList.remove('hidden');
-        detailEl.classList.add('hidden');
-        renderOverviewView();
+      if (state.activeView === 'OVERVIEW' || state.tickers.length === 0) {
+        ovView.classList.remove('hidden');
+        dtView.classList.add('hidden');
+        renderOverview();
         return;
       }
 
-      overviewEl.classList.add('hidden');
-      detailEl.classList.remove('hidden');
+      ovView.classList.add('hidden');
+      dtView.classList.remove('hidden');
 
       const tickerObj = getActiveTickerObj();
+      if (!tickerObj) return;
       const cfg = tickerObj.config;
-      const p = computePortfolioForTicker(tickerObj);
+      const p = computePortfolio(tickerObj);
 
-      // 1. 기초 설정 입력값 동기화
+      document.getElementById('activeTickerSectionTitle').textContent = `${cfg.ticker} 기초 운용 설정 (직접 입력 · 즉시 반영)`;
+      document.getElementById('txFormTickerLabel').textContent = `${cfg.ticker} 일일 매수 · 매도 체결 결과 입력`;
+      document.getElementById('journalSectionTitle').textContent = `${cfg.ticker} 누적 매매 일지`;
+
       document.getElementById('cfgTicker').value = cfg.ticker;
       document.getElementById('cfgAllocPct').value = Number(cfg.allocPct) || 0;
       document.getElementById('cfgKrw').value = Math.round(Number(cfg.krwCapital) || 0).toLocaleString('ko-KR');
@@ -1327,7 +1561,6 @@
       document.getElementById('cfgSplits').value = cfg.splits;
       document.getElementById('currentPriceInput').value = Number(cfg.currentPrice).toFixed(2);
 
-      // 수량/금액 모드 버튼
       const fixedBtn = document.getElementById('modeFixedBtn');
       const amountBtn = document.getElementById('modeAmountBtn');
       const stepper = document.getElementById('fixedQtyStepper');
@@ -1342,50 +1575,41 @@
       }
       document.getElementById('targetQtyDisplay').textContent = cfg.targetQty + '주';
 
-      // KPI 6개 업데이트
       document.getElementById('kpiQty').textContent = `${p.totalQty.toLocaleString()} 주`;
       document.getElementById('kpiQtySub').textContent = `매수원금 ${fmtUsd(p.totalCost)}`;
 
       document.getElementById('kpiAvg').textContent = fmtUsd(p.avgPrice);
       document.getElementById('kpiAvgSub').textContent = `원화 약 ${fmtKrw(p.avgPrice * cfg.exchangeRate)}`;
 
-      const curPrice = p.curPrice;
-      const evalValue = p.evalValue;
-      const evalPnL = p.evalPnL;
-      const evalPct = p.evalPct;
       const evalEl = document.getElementById('kpiEval');
-      const signPct = evalPct > 0 ? '+' : '';
-      const signUsd = evalPnL > 0 ? '+' : '';
-      evalEl.textContent = `${fmtUsd(curPrice)} (${signPct}${evalPct.toFixed(2)}%)`;
-      evalEl.className = `text-[15px] font-extrabold mt-1 tabular-nums no-wrap text-center ${evalPnL > 0 ? 'text-emerald-600' : evalPnL < 0 ? 'text-rose-600' : 'text-slate-800'}`;
-      document.getElementById('kpiEvalSub').textContent = `손익 ${signUsd}${fmtUsd(evalPnL)} · 평가 ${fmtUsd(evalValue)}`;
+      const signPct = p.evalPct > 0 ? '+' : '';
+      const signUsd = p.evalPnL > 0 ? '+' : '';
+      evalEl.textContent = `${fmtUsd(p.curPrice)} (${signPct}${p.evalPct.toFixed(2)}%)`;
+      evalEl.className = `text-[15px] font-extrabold mt-1 tabular-nums no-wrap text-center ${p.evalPnL > 0 ? 'text-emerald-600' : p.evalPnL < 0 ? 'text-rose-600' : 'text-slate-800'}`;
+      document.getElementById('kpiEvalSub').textContent = `손익 ${signUsd}${fmtUsd(p.evalPnL)} · 평가 ${fmtUsd(p.evalValue)}`;
 
       const estUnitCost = p.avgPrice > 0 ? p.avgPrice * cfg.targetQty : (cfg.usdCapital / cfg.splits);
       const remRounds = estUnitCost > 0 ? (p.cash / estUnitCost).toFixed(1) : '0.0';
       document.getElementById('kpiCash').textContent = fmtUsd(p.cash);
       document.getElementById('kpiCashSub').textContent = `${cfg.targetQty}주 기준 약 ${remRounds}회 여력`;
 
+      const capRetEl = document.getElementById('kpiCapReturn');
+      const capRetSign = p.capitalReturnPct > 0 ? '+' : '';
+      const totPnlSign = p.totalCombinedPnL > 0 ? '+' : '';
+      capRetEl.textContent = `${capRetSign}${p.capitalReturnPct.toFixed(2)}%`;
+      capRetEl.className = `text-[15px] font-extrabold mt-1 tabular-nums no-wrap text-center ${p.totalCombinedPnL > 0 ? 'text-emerald-600' : p.totalCombinedPnL < 0 ? 'text-rose-600' : 'text-slate-800'}`;
+      document.getElementById('kpiCapReturnSub').textContent = `총손익 ${totPnlSign}${fmtUsd(p.totalCombinedPnL)} / ${fmtUsd(cfg.usdCapital)}`;
+
       const realEl = document.getElementById('kpiRealized');
       const rSign = p.realizedPnL > 0 ? '+' : '';
-      const rPctSign = p.realizedPct > 0 ? '+' : '';
-      realEl.textContent = `${rSign}${fmtUsd(p.realizedPnL)} (${rPctSign}${p.realizedPct.toFixed(2)}%)`;
+      const rPctSign = p.realizedReturnPct > 0 ? '+' : '';
+      realEl.textContent = `${rSign}${fmtUsd(p.realizedPnL)} (${rPctSign}${p.realizedReturnPct.toFixed(2)}%)`;
       realEl.className = `text-[15px] font-extrabold mt-1 tabular-nums no-wrap text-center ${p.realizedPnL > 0 ? 'text-emerald-600' : p.realizedPnL < 0 ? 'text-rose-600' : 'text-slate-800'}`;
-      document.getElementById('kpiRealizedSub').textContent = `원화 약 ${rSign}${fmtKrw(p.realizedPnL * cfg.exchangeRate)}`;
+      document.getElementById('kpiRealizedSub').textContent = `매도원금 ${fmtUsd(p.totalSoldCost)}`;
 
-      const totalPnL = evalPnL + p.realizedPnL;
-      const capYieldPct = cfg.usdCapital > 0 ? (totalPnL / cfg.usdCapital) * 100 : 0;
-      const cySign = capYieldPct > 0 ? '+' : '';
-      const tpSign = totalPnL > 0 ? '+' : '';
-      const capYieldEl = document.getElementById('kpiCapitalYieldPct');
-      capYieldEl.textContent = `${cySign}${capYieldPct.toFixed(2)}%`;
-      capYieldEl.className = `text-[15px] font-extrabold mt-1 tabular-nums no-wrap text-center ${totalPnL > 0 ? 'text-emerald-600' : totalPnL < 0 ? 'text-rose-600' : 'text-slate-800'}`;
-      document.getElementById('kpiCapitalYieldSub').textContent = `총손익 ${tpSign}${fmtUsd(totalPnL)}`;
-
-      // 주문표 렌더링
       renderOrderCards(tickerObj, p);
-
-      // 매매일지 렌더링
       renderTable(p.rows);
+      updateTxPreview();
     }
 
     function renderOrderCards(tickerObj, p) {
@@ -1394,7 +1618,6 @@
       const v1 = calc.v1;
       const v4 = calc.v4;
 
-      // --- 1.0 렌더링 ---
       document.getElementById('v1Subtitle').textContent = `1회기준 ${fmtUsd(v1.unitBudget)} · 금액진행 ${v1.round.toFixed(2)}회차`;
 
       let v1Html = '';
@@ -1440,7 +1663,7 @@
               <span class="font-bold text-emerald-700 no-wrap">${fmtUsd(v1.sell10)} × ${p.totalQty}주</span>
             </div>
             <div class="flex items-center justify-between gap-2 py-1.5">
-              <span class="text-slate-600">SOXL 권장 익절 (+12%)</span>
+              <span class="text-slate-600">레버리지 권장 익절 (+12%)</span>
               <span class="font-bold text-emerald-700 no-wrap">${fmtUsd(v1.sell12)} × ${p.totalQty}주</span>
             </div>
           </div>
@@ -1448,7 +1671,6 @@
       }
       document.getElementById('v1Body').innerHTML = v1Html;
 
-      // --- 4.0 렌더링 ---
       let phaseLabel = '전반전 (T < 20)';
       if (p.tValue > calc.splits - 1) phaseLabel = '리버스 모드 (T > 39)';
       else if (p.tValue >= calc.splits / 2) phaseLabel = '후반전 (20 ≤ T ≤ 39)';
@@ -1534,7 +1756,7 @@
       document.getElementById('logCountBadge').textContent = `${rows.length}건`;
 
       if (rows.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="12" class="py-8 text-center text-slate-400">기록된 매매 내역이 없습니다.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="12" class="py-8 text-center text-slate-400">기록된 매매 내역이 없습니다. 위 입력 폼에서 첫 체결 결과를 등록해 주세요.</td></tr>`;
         return;
       }
 
@@ -1574,87 +1796,88 @@
       }).join('');
     }
 
-    // 종합 투자현황 원금 및 환율 수정
-    function updateTotalCapitalFromOverview() {
-      const rawKrw = String(document.getElementById('ovTotalKrwInput').value).replace(/[^\d]/g, '');
-      const newTotalKrw = Math.max(0, parseFloat(rawKrw) || 0);
-      state.totalKrwCapital = newTotalKrw;
+    function switchView(viewId) {
+      state.activeView = viewId;
+      saveState();
+      renderAll();
+    }
 
-      // 모든 종목의 투자운영금(원)과 달러원금($)을 각 비중(%)에 맞춰 동기화
-      state.tickers.forEach(tObj => {
-        const pct = Number(tObj.config.allocPct) || 0;
-        const rate = Number(tObj.config.exchangeRate) || state.globalExchangeRate || 1336;
-        const krw = Math.round(newTotalKrw * (pct / 100));
-        tObj.config.krwCapital = krw;
-        tObj.config.usdCapital = rate > 0 ? Number((krw / rate).toFixed(2)) : 0;
+    function updateTotalPortfolioKrw() {
+      const raw = String(document.getElementById('totalPortfolioKrwInput').value).replace(/[^\d]/g, '');
+      const totalKrw = parseFloat(raw) || 0;
+      state.totalPortfolioKrw = totalKrw;
+
+      state.tickers.forEach(t => {
+        const pct = Number(t.config.allocPct) || 0;
+        const krw = Math.round(totalKrw * (pct / 100));
+        const rate = Number(t.config.exchangeRate) || state.globalExchangeRate || 1336;
+        t.config.krwCapital = krw;
+        t.config.usdCapital = rate > 0 ? Number((krw / rate).toFixed(2)) : 0;
       });
 
       saveState();
       renderAll();
-      showToast(`총 투자원금 ${fmtKrw(newTotalKrw)} 및 전 종목 배정금액이 반영되었습니다.`);
+      showToast(`총 투자원금 ${fmtKrw(totalKrw)} 기준으로 전 종목 운영금이 재계산되었습니다.`);
     }
 
-    function updateGlobalRateFromOverview() {
-      const rawRate = String(document.getElementById('ovExchangeRateInput').value).replace(/,/g, '');
-      const newRate = parseFloat(rawRate) || 1336;
-      state.globalExchangeRate = newRate;
+    function updateGlobalExchangeRate() {
+      const raw = String(document.getElementById('globalRateInput').value).replace(/,/g, '');
+      const rate = parseFloat(raw) || 1336;
+      state.globalExchangeRate = rate;
 
-      state.tickers.forEach(tObj => {
-        tObj.config.exchangeRate = newRate;
-        tObj.config.usdCapital = newRate > 0 ? Number((tObj.config.krwCapital / newRate).toFixed(2)) : 0;
+      state.tickers.forEach(t => {
+        t.config.exchangeRate = rate;
+        t.config.usdCapital = rate > 0 ? Number((t.config.krwCapital / rate).toFixed(2)) : 0;
       });
 
       saveState();
       renderAll();
-      showToast(`기준 환율 ${newRate.toLocaleString('ko-KR')}원/$ 반영 완료`);
+      showToast(`기준환율 ${rate.toLocaleString('ko-KR')}원/$ 반영 완료`);
     }
 
-    // 비중재계산 버튼: 총 투자원금 × 현재 종목 투자 비중(%)
-    function recalcCapitalFromAllocation(notify = false) {
+    function applyAllocationToTicker() {
       const tickerObj = getActiveTickerObj();
-      const cfg = tickerObj.config;
+      if (!tickerObj) return;
       const pct = Math.max(0, Math.min(100, parseFloat(document.getElementById('cfgAllocPct').value) || 0));
-      const rate = Number(cfg.exchangeRate) || state.globalExchangeRate || 1336;
-      const krw = Math.round((Number(state.totalKrwCapital) || 0) * (pct / 100));
-      const usd = rate > 0 ? Number((krw / rate).toFixed(2)) : 0;
+      const krw = Math.round((Number(state.totalPortfolioKrw) || 0) * (pct / 100));
+      const rate = Number(tickerObj.config.exchangeRate) || state.globalExchangeRate || 1336;
 
-      cfg.allocPct = pct;
-      cfg.krwCapital = krw;
-      cfg.usdCapital = usd;
+      tickerObj.config.allocPct = pct;
+      tickerObj.config.krwCapital = krw;
+      tickerObj.config.usdCapital = rate > 0 ? Number((krw / rate).toFixed(2)) : 0;
 
       saveState();
       renderAll();
-      if (notify) {
-        showToast(`${cfg.ticker} 비중 ${pct}% → 투자운영금 ${fmtKrw(krw)} (${fmtUsd(usd)}) 반영`);
-      }
+      showToast(`${tickerObj.config.ticker} 비중 ${pct}% (${fmtKrw(krw)}) 적용 완료`);
     }
 
-    // 기초 운용 설정 인라인 수정 핸들러
     function updateBasicConfig(changedField) {
       const tickerObj = getActiveTickerObj();
+      if (!tickerObj) return;
       const cfg = tickerObj.config;
 
-      const ticker = document.getElementById('cfgTicker').value.trim().toUpperCase() || cfg.ticker || 'SOXL';
+      const ticker = document.getElementById('cfgTicker').value.trim().toUpperCase() || 'SOXL';
       const allocPct = Math.max(0, Math.min(100, parseFloat(document.getElementById('cfgAllocPct').value) || 0));
       const rawRate = String(document.getElementById('cfgRate').value).replace(/,/g, '');
       const rawUsd = String(document.getElementById('cfgUsd').value).replace(/,/g, '');
-      let krw = Number(cfg.krwCapital) || 0;
       let rate = parseFloat(rawRate) || 1336;
       let usd = parseFloat(rawUsd) || 0;
+      let krw = Math.round((Number(state.totalPortfolioKrw) || 0) * (allocPct / 100));
       const splits = Math.max(10, parseInt(document.getElementById('cfgSplits').value, 10) || 40);
 
-      if (changedField === 'allocPct') {
-        krw = Math.round((Number(state.totalKrwCapital) || 0) * (allocPct / 100));
-        usd = rate > 0 ? Number((krw / rate).toFixed(2)) : 0;
-      } else if (changedField === 'rate') {
+      if (changedField === 'allocPct' || changedField === 'rate') {
         usd = rate > 0 ? Number((krw / rate).toFixed(2)) : 0;
       } else if (changedField === 'usd') {
-        // 투자운영금(원)은 총 투자원금 × 투자 비중으로 고정 유지
-        usd = Math.max(0, Number(usd.toFixed(2)));
+        const calcKrw = Math.round(usd * rate);
+        const totalKrw = Number(state.totalPortfolioKrw) || 0;
+        if (totalKrw > 0) {
+          cfg.allocPct = Number(((calcKrw / totalKrw) * 100).toFixed(1));
+          krw = Math.round(totalKrw * (cfg.allocPct / 100));
+        }
       }
 
       cfg.ticker = ticker;
-      cfg.allocPct = allocPct;
+      if (changedField !== 'usd') cfg.allocPct = allocPct;
       cfg.krwCapital = krw;
       cfg.exchangeRate = rate;
       cfg.usdCapital = usd;
@@ -1663,12 +1886,13 @@
       renderAll();
 
       if (changedField === 'ticker' && state.api.provider !== 'none' && state.api.key) {
-        fetchLivePriceForTicker(tickerObj, false);
+        fetchLivePriceForTicker(tickerObj, true);
       }
     }
 
     function setOrderMode(mode) {
       const tickerObj = getActiveTickerObj();
+      if (!tickerObj) return;
       tickerObj.config.orderMode = mode;
       saveState();
       renderAll();
@@ -1676,14 +1900,15 @@
 
     function changeTargetQty(delta) {
       const tickerObj = getActiveTickerObj();
+      if (!tickerObj) return;
       tickerObj.config.targetQty = Math.max(1, (Number(tickerObj.config.targetQty) || 4) + delta);
       saveState();
       renderAll();
-      updateTxPreview();
     }
 
     function applyCurrentPrice() {
       const tickerObj = getActiveTickerObj();
+      if (!tickerObj) return;
       const inputEl = document.getElementById('currentPriceInput');
       const raw = String(inputEl.value).replace(/,/g, '').trim();
 
@@ -1704,20 +1929,25 @@
       showToast(`${tickerObj.config.ticker} 현재가 ${fmtUsd(tickerObj.config.currentPrice)} 반영 완료`);
     }
 
-    // 종목 추가 모달 제어
     function openAddTickerModal() {
+      let usedPct = 0;
+      state.tickers.forEach(t => usedPct += (Number(t.config.allocPct) || 0));
+      const remPct = Math.max(0, Number((100 - usedPct).toFixed(1)));
       document.getElementById('newTickerSymbol').value = '';
-      const usedPct = state.tickers.reduce((acc, t) => acc + (Number(t.config.allocPct) || 0), 0);
-      const remainPct = Math.max(0, Math.min(100, Number((100 - usedPct).toFixed(1))));
-      document.getElementById('newTickerAllocPct').value = remainPct > 0 ? remainPct : 20;
-      document.getElementById('newTickerSplits').value = 40;
-      document.getElementById('newTickerTargetQty').value = 4;
-      previewNewTickerCapital();
-
+      document.getElementById('newTickerAllocPct').value = remPct > 0 ? remPct : 25;
+      updateNewTickerCalcKrw();
+      document.getElementById('newTickerSplits').value = '40';
+      document.getElementById('newTickerTargetQty').value = '4';
       const modal = document.getElementById('addTickerModal');
       modal.classList.remove('hidden');
       modal.classList.add('flex');
-      setTimeout(() => document.getElementById('newTickerSymbol').focus(), 60);
+      document.getElementById('newTickerSymbol').focus();
+    }
+
+    function updateNewTickerCalcKrw() {
+      const pct = Math.max(0, Math.min(100, parseFloat(document.getElementById('newTickerAllocPct').value) || 0));
+      const krw = Math.round((Number(state.totalPortfolioKrw) || 0) * (pct / 100));
+      document.getElementById('newTickerCalcKrw').value = krw.toLocaleString('ko-KR');
     }
 
     function closeAddTickerModal() {
@@ -1726,81 +1956,49 @@
       modal.classList.remove('flex');
     }
 
-    function previewNewTickerCapital() {
-      const pct = Math.max(0, Math.min(100, parseFloat(document.getElementById('newTickerAllocPct').value) || 0));
-      const totalKrw = Number(state.totalKrwCapital) || 0;
-      const krw = Math.round(totalKrw * (pct / 100));
-      document.getElementById('newTickerKrw').value = krw.toLocaleString('ko-KR');
-      document.getElementById('newTickerHelperText').textContent =
-        `현재 총 투자원금 ${fmtKrw(totalKrw)} 기준 ${pct}% = ${fmtKrw(krw)} 자동 배정`;
-    }
-
-    async function confirmAddTicker() {
+    function confirmAddTicker() {
       const symbol = document.getElementById('newTickerSymbol').value.trim().toUpperCase();
       if (!symbol) {
-        showToast('추가할 종목 티커(예: TQQQ)를 입력해 주세요.');
+        showToast('종목 티커(예: TQQQ)를 입력해 주세요.');
         return;
       }
       if (state.tickers.some(t => t.config.ticker === symbol)) {
-        showToast(`${symbol} 종목은 이미 등록되어 있습니다.`);
+        showToast(`이미 등록된 종목(${symbol})입니다.`);
         return;
       }
-
       const allocPct = Math.max(0, Math.min(100, parseFloat(document.getElementById('newTickerAllocPct').value) || 0));
       const splits = Math.max(10, parseInt(document.getElementById('newTickerSplits').value, 10) || 40);
       const targetQty = Math.max(1, parseInt(document.getElementById('newTickerTargetQty').value, 10) || 4);
-      const rate = Number(state.globalExchangeRate) || 1336;
-      const krw = Math.round((Number(state.totalKrwCapital) || 0) * (allocPct / 100));
-      const usd = rate > 0 ? Number((krw / rate).toFixed(2)) : 0;
 
-      const newId = 'ticker_' + symbol.toLowerCase() + '_' + Date.now();
-      const newTickerObj = {
-        id: newId,
-        config: {
-          ticker: symbol,
-          allocPct,
-          krwCapital: krw,
-          exchangeRate: rate,
-          usdCapital: usd,
-          splits,
-          orderMode: 'fixed',
-          targetQty,
-          currentPrice: 0
-        },
-        transactions: []
-      };
-
-      state.tickers.push(newTickerObj);
-      state.activeTab = newId;
+      const newItem = createTickerItem(symbol, allocPct, state.totalPortfolioKrw, state.globalExchangeRate, splits, targetQty);
+      state.tickers.push(newItem);
+      state.activeView = newItem.id;
       saveState();
       closeAddTickerModal();
       renderAll();
-      showToast(`${symbol} 종목(비중 ${allocPct}%)이 추가되었습니다.`);
+      showToast(`${symbol} 종목이 추가되었습니다.`);
 
       if (state.api.provider !== 'none' && state.api.key) {
-        await fetchLivePriceForTicker(newTickerObj, true);
+        fetchLivePriceForTicker(newItem, true);
       }
     }
 
-    function deleteTickerTab(tickerId) {
+    function deleteTicker(id) {
       if (state.tickers.length <= 1) {
-        showToast('최소 1개 이상의 종목이 필요합니다.');
+        showToast('최소 1개의 종목은 유지되어야 합니다.');
         return;
       }
-      const idx = state.tickers.findIndex(t => t.id === tickerId);
-      if (idx === -1) return;
-      const removedName = state.tickers[idx].config.ticker;
-      state.tickers.splice(idx, 1);
-
-      if (state.activeTab === tickerId) {
-        state.activeTab = state.tickers[Math.max(0, idx - 1)].id;
+      const target = state.tickers.find(t => t.id === id);
+      if (!target) return;
+      state.tickers = state.tickers.filter(t => t.id !== id);
+      if (state.activeView === id) {
+        state.activeView = 'OVERVIEW';
       }
       saveState();
       renderAll();
-      showToast(`${removedName} 종목 탭이 삭제되었습니다.`);
+      showToast(`${target.config.ticker} 종목이 삭제되었습니다.`);
     }
 
-    // 일일 체결 폼 제어
     function toggleCustomTInput() {
       const mode = document.getElementById('txTMode').value;
       const customInput = document.getElementById('txCustomT');
@@ -1810,6 +2008,7 @@
 
     function updateTxPreview() {
       const tickerObj = getActiveTickerObj();
+      if (!tickerObj) return;
       const type = document.getElementById('txType').value;
       const price = parseFloat(document.getElementById('txPrice').value) || 0;
       const qty = parseInt(document.getElementById('txQty').value, 10) || 0;
@@ -1835,6 +2034,8 @@
 
     function addTransaction() {
       const tickerObj = getActiveTickerObj();
+      if (!tickerObj) return;
+
       const date = document.getElementById('txDate').value || new Date().toISOString().slice(0, 10);
       const type = document.getElementById('txType').value;
       const price = parseFloat(document.getElementById('txPrice').value);
@@ -1875,35 +2076,28 @@
       showToast(`${tickerObj.config.ticker} 체결 내역이 반영되었습니다.`);
     }
 
-    function deleteTransaction(id) {
+    function deleteTransaction(txId) {
       const tickerObj = getActiveTickerObj();
-      tickerObj.transactions = tickerObj.transactions.filter(t => t.id !== id);
+      if (!tickerObj) return;
+      tickerObj.transactions = tickerObj.transactions.filter(t => t.id !== txId);
       saveState();
       renderAll();
       showToast('체결 기록이 삭제되었습니다.');
     }
 
-    function resetCurrentTickerToDefault() {
+    function clearCurrentTickerLogs() {
       const tickerObj = getActiveTickerObj();
-      if (tickerObj.id === 'ticker_soxl_default') {
-        const def = createDefaultSoxlTicker();
-        tickerObj.config = def.config;
-        tickerObj.transactions = def.transactions;
-        state.totalKrwCapital = 10000000;
-        saveState();
-        renderAll();
-        showToast('SOXL 초기 4주 세팅으로 복원되었습니다.');
-      } else {
-        tickerObj.transactions = [];
-        saveState();
-        renderAll();
-        showToast(`${tickerObj.config.ticker} 매매 일지가 초기화되었습니다.`);
-      }
+      if (!tickerObj) return;
+      tickerObj.transactions = [];
+      saveState();
+      renderAll();
+      showToast(`${tickerObj.config.ticker} 매매 일지가 초기화되었습니다.`);
     }
 
     function copyOrders(ver) {
       const tickerObj = getActiveTickerObj();
-      const p = computePortfolioForTicker(tickerObj);
+      if (!tickerObj) return;
+      const p = computePortfolio(tickerObj);
       const cfg = tickerObj.config;
       const calc = calculateOrdersData(tickerObj, p);
       let text = '';
@@ -1941,7 +2135,7 @@
       }
 
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).then(() => showToast('주문표가 클립보드에 복사되었습니다.'));
+        navigator.clipboard.writeText(text).then(() => showToast(`${cfg.ticker} 주문표가 클립보드에 복사되었습니다.`));
       } else {
         const ta = document.createElement('textarea');
         ta.value = text;
@@ -1949,16 +2143,16 @@
         ta.select();
         document.execCommand('copy');
         document.body.removeChild(ta);
-        showToast('주문표가 클립보드에 복사되었습니다.');
+        showToast(`${cfg.ticker} 주문표가 클립보드에 복사되었습니다.`);
       }
     }
 
-    // 메모 전체보기 모달
-    function openMemoModal(id) {
+    function openMemoModal(txId) {
       const tickerObj = getActiveTickerObj();
-      const tx = tickerObj.transactions.find(t => t.id === id);
+      if (!tickerObj) return;
+      const tx = tickerObj.transactions.find(t => t.id === txId);
       if (!tx) return;
-      editingMemoTxId = id;
+      editingMemoTxId = txId;
       document.getElementById('memoTxMeta').textContent = `[${tickerObj.config.ticker}] ${tx.date} | ${tx.type === 'BUY' ? '매수' : '매도'} ${tx.qty}주 @ ${fmtUsd(tx.price)}`;
       document.getElementById('memoModalTextarea').value = tx.memo || '';
       const modal = document.getElementById('memoModal');
@@ -1974,8 +2168,8 @@
     }
 
     function saveMemoEdit() {
-      if (!editingMemoTxId) return;
       const tickerObj = getActiveTickerObj();
+      if (!tickerObj || !editingMemoTxId) return;
       const tx = tickerObj.transactions.find(t => t.id === editingMemoTxId);
       if (tx) {
         tx.memo = document.getElementById('memoModalTextarea').value.trim();
@@ -1986,7 +2180,6 @@
       closeMemoModal();
     }
 
-    // 실시간 시세 API 설정 모달
     function openApiModal() {
       selectedModalProvider = state.api.provider || 'twelvedata';
       document.getElementById('apiKeyInput').value = state.api.key || '';
@@ -2035,7 +2228,7 @@
         } else {
           keyInput.placeholder = 'Twelve Data API Key 입력';
           helpLink.href = 'https://twelvedata.com/pricing';
-          desc.textContent = 'Twelve Data 무료 키는 일 800회 호출 및 미국 ETF/주식 실시간 시세와 USD/KRW 환율을 지원합니다.';
+          desc.textContent = 'Twelve Data 무료 키는 일 800회 호출 및 미국 ETF/주식 실시간 시세와 USD/KRW 환율을 지원합니다. 로그인 시 본인 클라우드 계정에 저장됩니다.';
         }
         if (shouldFocus) keyInput.focus();
       }
@@ -2071,22 +2264,19 @@
     }
 
     async function fetchLiveExchangeRate(notify = false) {
-      const apiKey = (state.api.provider === 'twelvedata' && state.api.key)
-        ? state.api.key
-        : DEFAULT_STATE.api.key;
-      if (!apiKey) return;
+      if (state.api.provider !== 'twelvedata' || !state.api.key) return;
 
       try {
-        const res = await fetch(`https://api.twelvedata.com/price?symbol=USD%2FKRW&apikey=${encodeURIComponent(apiKey)}`);
+        const res = await fetch(`https://api.twelvedata.com/price?symbol=USD%2FKRW&apikey=${encodeURIComponent(state.api.key)}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (data && data.price && !isNaN(parseFloat(data.price))) {
           const liveRate = Number(parseFloat(data.price).toFixed(2));
           if (liveRate > 0) {
             state.globalExchangeRate = liveRate;
-            state.tickers.forEach(tObj => {
-              tObj.config.exchangeRate = liveRate;
-              tObj.config.usdCapital = Number((tObj.config.krwCapital / liveRate).toFixed(2));
+            state.tickers.forEach(t => {
+              t.config.exchangeRate = liveRate;
+              t.config.usdCapital = Number((t.config.krwCapital / liveRate).toFixed(2));
             });
             saveState();
             renderAll();
@@ -2099,8 +2289,8 @@
     }
 
     async function testApiConnection() {
-      const tickerObj = getActiveTickerObj();
       const resBox = document.getElementById('apiTestResult');
+      const sampleTicker = (state.tickers[0] && state.tickers[0].config.ticker) || 'SOXL';
       if (selectedModalProvider === 'none') {
         resBox.className = 'rounded-xl p-3 text-xs font-semibold bg-slate-100 text-slate-700';
         resBox.textContent = '수동 입력 모드입니다. 대시보드 현재가 칸에 직접 숫자를 입력해 사용합니다.';
@@ -2116,13 +2306,13 @@
       }
 
       resBox.className = 'rounded-xl p-3 text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200';
-      resBox.textContent = `${tickerObj.config.ticker} 시세 연결 테스트 중...`;
+      resBox.textContent = `${sampleTicker} 시세 연결 테스트 중...`;
       resBox.classList.remove('hidden');
 
       try {
-        const price = await queryTickerPrice(selectedModalProvider, key, tickerObj.config.ticker);
+        const price = await queryTickerPrice(selectedModalProvider, key, sampleTicker);
         resBox.className = 'rounded-xl p-3 text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200';
-        resBox.textContent = `연결 성공! ${tickerObj.config.ticker} 현재가: ${fmtUsd(price)}`;
+        resBox.textContent = `연결 성공! ${sampleTicker} 현재가: ${fmtUsd(price)}`;
       } catch (err) {
         resBox.className = 'rounded-xl p-3 text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200';
         resBox.textContent = `연결 실패: ${err.message}`;
@@ -2137,7 +2327,7 @@
       closeApiModal();
       updateApiBadge();
       if (state.api.provider !== 'none' && state.api.key) {
-        refreshAllTickersLive();
+        refreshAllPrices(true);
       } else {
         showToast('시세 API 설정이 저장되었습니다.');
       }
@@ -2153,52 +2343,94 @@
         txt.className = 'text-emerald-300';
       } else {
         dot.className = 'w-2 h-2 rounded-full bg-amber-400 shrink-0';
-        txt.textContent = 'API 키 미설정 (수동입력)';
+        txt.textContent = 'API 키 미설정';
         txt.className = 'text-amber-300';
       }
     }
 
     async function fetchLivePriceForTicker(tickerObj, notify = false) {
+      if (!tickerObj) return;
       if (state.api.provider === 'none' || !state.api.key) {
         if (notify) openApiModal();
         return;
       }
       try {
         const price = await queryTickerPrice(state.api.provider, state.api.key, tickerObj.config.ticker);
-        tickerObj.config.currentPrice = Number(price.toFixed(2));
+        tickerObj.config.currentPrice = price;
         saveState();
         renderAll();
-        if (notify) showToast(`${tickerObj.config.ticker} 현재가 ${fmtUsd(tickerObj.config.currentPrice)} 반영 완료`);
+        if (notify) showToast(`${tickerObj.config.ticker} 현재가 ${fmtUsd(price)} 반영 완료`);
       } catch (e) {
         if (notify) showToast(`${tickerObj.config.ticker} 시세 조회 실패: ${e.message}`);
       }
     }
 
-    async function refreshAllTickersLive() {
+    async function refreshAllPrices(notify = false) {
       if (state.api.provider === 'none' || !state.api.key) {
-        openApiModal();
+        if (notify) openApiModal();
         return;
       }
-      showToast('전 종목 실시간 시세 및 환율 조회 중...');
-      await fetchLiveExchangeRate(false);
-      for (const tObj of state.tickers) {
-        await fetchLivePriceForTicker(tObj, false);
+      for (const t of state.tickers) {
+        try {
+          const price = await queryTickerPrice(state.api.provider, state.api.key, t.config.ticker);
+          t.config.currentPrice = price;
+        } catch (e) {}
       }
-      showToast('전 종목 시세 · 환율 업데이트 완료');
+      await fetchLiveExchangeRate(false);
+      saveState();
+      renderAll();
+      if (notify) showToast('전 종목 실시간 시세 및 환율이 업데이트되었습니다.');
     }
 
+    // 전역 window 바인딩 (HTML 인라인 onclick 이벤트용)
+    Object.assign(window, {
+      switchView,
+      updateTotalPortfolioKrw,
+      updateGlobalExchangeRate,
+      applyAllocationToTicker,
+      updateBasicConfig,
+      setOrderMode,
+      changeTargetQty,
+      applyCurrentPrice,
+      openAddTickerModal,
+      updateNewTickerCalcKrw,
+      closeAddTickerModal,
+      confirmAddTicker,
+      deleteTicker,
+      toggleCustomTInput,
+      updateTxPreview,
+      addTransaction,
+      deleteTransaction,
+      clearCurrentTickerLogs,
+      copyOrders,
+      openMemoModal,
+      closeMemoModal,
+      saveMemoEdit,
+      openApiModal,
+      closeApiModal,
+      selectProvider,
+      toggleApiKeyVisibility,
+      testApiConnection,
+      saveApiSettings,
+      refreshAllPrices,
+      openAuthModal,
+      closeAuthModal,
+      signInWithGoogle,
+      signInWithEmail,
+      registerWithEmail,
+      signOutUser,
+      forceSyncNow,
+      formatKrwInput,
+      formatDecimalCommaInput
+    });
+
     // 초기화 실행
-    (function init() {
-      document.getElementById('txDate').value = new Date().toISOString().slice(0, 10);
-      renderAll();
-      updateTxPreview();
-      if (state.api.provider !== 'none' && state.api.key) {
-        for (const tObj of state.tickers) {
-          fetchLivePriceForTicker(tObj, false);
-        }
-      }
-      fetchLiveExchangeRate(false);
-    })();
+    document.getElementById('txDate').value = new Date().toISOString().slice(0, 10);
+    renderAll();
+    initFirebase();
+    if (state.api.provider !== 'none' && state.api.key) {
+      refreshAllPrices(false);
+    }
   </script>
 </body>
 </html>
