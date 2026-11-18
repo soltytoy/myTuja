@@ -106,10 +106,10 @@
       box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
     }
 
-    /* 상단 5대 KPI 1행 고정 (좁은 화면 가로 스크롤) */
+    /* 상단 6대 KPI 1행 고정 (좁은 화면 가로 스크롤) */
     .kpi-scroll {
       display: grid;
-      grid-template-columns: repeat(5, minmax(192px, 1fr));
+      grid-template-columns: repeat(6, minmax(175px, 1fr));
       gap: 10px;
       overflow-x: auto;
       padding-bottom: 4px;
@@ -122,9 +122,23 @@
     }
 
     /* 테이블 제목행 가운데 정렬 및 줄바꿈 방지 */
-    #journalTable thead th {
+    #journalTable thead th,
+    #overviewTable thead th {
       text-align: center;
       white-space: nowrap;
+    }
+
+    /* 종목 탭 가로 스크롤바 숨김 및 터치 스크롤 */
+    .tab-bar-scroll {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .tab-bar-scroll::-webkit-scrollbar {
+      display: none;
     }
 
     /* 커스텀 스크롤바 */
@@ -167,254 +181,428 @@
         </button>
       </div>
     </div>
+
+    <!-- 상단 네비게이션 탭 바 (종합 투자현황 + 개별 종목 탭 + 종목 추가) -->
+    <div class="bg-slate-950/90 border-t border-slate-800">
+      <div class="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between gap-2">
+        <div id="topNavTabs" class="tab-bar-scroll flex-1 py-0.5"></div>
+        <button type="button" onclick="openAddTickerModal()" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold flex items-center gap-1 shadow-xs transition shrink-0 no-wrap cursor-pointer">
+          <span>+</span>
+          <span>종목 추가</span>
+        </button>
+      </div>
+    </div>
   </header>
 
   <main class="max-w-7xl mx-auto px-4 pt-5 space-y-5">
 
-    <!-- 1. 기초 운용 설정 (대시보드 인라인 직접 수정 패널) -->
-    <section aria-label="기초 운용 설정" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
-      <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-        <h2 class="text-sm font-extrabold text-slate-800 flex items-center gap-1.5">
-          <span class="w-1.5 h-4 bg-blue-600 rounded-full"></span>
-          기초 운용 설정 (직접 입력 · 즉시 반영)
-        </h2>
-
-        <div class="flex flex-wrap items-center gap-2">
-          <!-- 일일 주문 산출 모드 전환 토글 -->
-          <div class="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200 text-xs">
-            <button type="button" id="modeFixedBtn" onclick="setOrderMode('fixed')" class="px-3 py-1 rounded-lg font-bold bg-white text-blue-600 shadow-xs transition no-wrap cursor-pointer">
-              고정수량 기준
-            </button>
-            <button type="button" id="modeAmountBtn" onclick="setOrderMode('amount')" class="px-3 py-1 rounded-lg font-medium text-slate-600 hover:text-slate-900 transition no-wrap cursor-pointer">
-              금액자동 분할
-            </button>
-          </div>
-
-          <!-- 일일 목표 수량 스테퍼 (- 4주 +) -->
-          <div id="fixedQtyStepper" class="inline-flex items-center bg-slate-100 border border-slate-200 rounded-xl px-2 py-1 text-xs">
-            <span class="text-slate-500 font-semibold mr-1.5 no-wrap">일일목표</span>
-            <button type="button" onclick="changeTargetQty(-1)" aria-label="목표 수량 1주 감소" class="w-6 h-6 rounded-lg bg-white border border-slate-200 font-extrabold text-slate-700 hover:bg-slate-50 active:scale-95 transition cursor-pointer">-</button>
-            <span id="targetQtyDisplay" class="px-2.5 font-extrabold text-blue-600 tabular-nums no-wrap">4주</span>
-            <button type="button" onclick="changeTargetQty(1)" aria-label="목표 수량 1주 증가" class="w-6 h-6 rounded-lg bg-white border border-slate-200 font-extrabold text-slate-700 hover:bg-slate-50 active:scale-95 transition cursor-pointer">+</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- 6개 핵심 파라미터 1행 배치 -->
-      <div class="grid grid-cols-6 gap-2 overflow-x-auto pb-1">
-        <div class="form-field min-w-[92px]">
-          <label for="cfgTicker" class="text-[11px] font-bold text-slate-500 mb-1 no-wrap text-center">종목 (Ticker)</label>
-          <input id="cfgTicker" type="text" maxlength="12" class="form-control uppercase font-extrabold text-blue-700 px-2.5 text-xs sm:text-sm text-center" value="SOXL" onchange="updateBasicConfig('ticker')" />
-        </div>
-
-        <div class="form-field min-w-[116px]">
-          <label for="cfgKrw" class="text-[11px] font-bold text-slate-500 mb-1 no-wrap text-center">운영원금 (원)</label>
-          <input id="cfgKrw" type="text" inputmode="numeric" class="form-control font-bold tabular-nums px-2.5 text-xs sm:text-sm text-center" value="10,000,000" oninput="formatKrwInput(this)" onchange="updateBasicConfig('krw')" />
-        </div>
-
-        <div class="form-field min-w-[96px]">
-          <label for="cfgRate" class="text-[11px] font-bold text-slate-500 mb-1 no-wrap text-center">적용환율 (원/$)</label>
-          <input id="cfgRate" type="text" inputmode="decimal" class="form-control font-bold tabular-nums px-2.5 text-xs sm:text-sm text-center" value="1,336" oninput="formatDecimalCommaInput(this)" onchange="updateBasicConfig('rate')" />
-        </div>
-
-        <div class="form-field min-w-[108px]">
-          <label for="cfgUsd" class="text-[11px] font-bold text-slate-500 mb-1 no-wrap text-center">달러원금 ($)</label>
-          <input id="cfgUsd" type="text" inputmode="decimal" class="form-control font-extrabold text-blue-700 tabular-nums px-2.5 text-xs sm:text-sm text-center" value="7,485.03" oninput="formatDecimalCommaInput(this)" onchange="updateBasicConfig('usd')" />
-        </div>
-
-        <div class="form-field min-w-[84px]">
-          <label for="cfgSplits" class="text-[11px] font-bold text-slate-500 mb-1 no-wrap text-center">분할수 (40)</label>
-          <input id="cfgSplits" type="number" min="10" max="100" class="form-control font-bold tabular-nums px-2.5 text-xs sm:text-sm text-center" value="40" onchange="updateBasicConfig('splits')" />
-        </div>
-
-        <div class="form-field min-w-[146px]">
-          <div class="flex items-center gap-1 mb-1">
-            <label for="currentPriceInput" class="flex-1 text-[11px] font-bold text-slate-500 no-wrap text-center">실시간 현재가 ($)</label>
-            <span aria-hidden="true" class="px-2.5 text-xs font-bold opacity-0 pointer-events-none select-none shrink-0 no-wrap">조회</span>
-          </div>
-          <div class="flex gap-1">
-            <input id="currentPriceInput" type="text" inputmode="decimal" class="form-control font-extrabold text-emerald-700 tabular-nums px-2 text-xs sm:text-sm text-center" value="48.21" onkeydown="if(event.key==='Enter'){ event.preventDefault(); applyCurrentPrice(); }" />
-            <button type="button" onclick="applyCurrentPrice()" title="입력한 현재가 반영 (빈칸일 경우 API 조회)" class="px-2.5 h-[44px] rounded-[10px] bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold shrink-0 transition no-wrap cursor-pointer">
-              조회
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 2. 상단 5대 핵심 KPI 요약 카드 (1행 고정 · 줄바꿈 금지) -->
-    <section aria-label="포트폴리오 요약 지표" class="kpi-scroll">
-      <!-- 카드 1: 보유수량 -->
-      <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 overflow-hidden">
-        <div class="text-[11px] font-bold text-slate-500 no-wrap">보유수량</div>
-        <div id="kpiQty" class="text-[15px] font-extrabold text-slate-900 mt-1 tabular-nums no-wrap text-right">4 주</div>
-        <div id="kpiQtySub" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-right">매수원금 $192.84</div>
-      </div>
-
-      <!-- 카드 2: 매입평단 -->
-      <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 overflow-hidden">
-        <div class="text-[11px] font-bold text-slate-500 no-wrap">매입평단</div>
-        <div id="kpiAvg" class="text-[15px] font-extrabold text-blue-600 mt-1 tabular-nums no-wrap text-right">$48.21</div>
-        <div id="kpiAvgSub" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-right">원화 약 64,409원</div>
-      </div>
-
-      <!-- 카드 3: 현재가 · 수익률(%) -->
-      <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 overflow-hidden">
-        <div class="text-[11px] font-bold text-slate-500 no-wrap">현재가 · 수익률(%)</div>
-        <div id="kpiEval" class="text-[15px] font-extrabold text-slate-800 mt-1 tabular-nums no-wrap text-right">$48.21 (0.00%)</div>
-        <div id="kpiEvalSub" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-right truncate">손익 $0.00 · 평가 $192.84</div>
-      </div>
-
-      <!-- 카드 4: 잔여 예수금 -->
-      <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 overflow-hidden">
-        <div class="text-[11px] font-bold text-slate-500 no-wrap">잔여 예수금</div>
-        <div id="kpiCash" class="text-[15px] font-extrabold text-slate-900 mt-1 tabular-nums no-wrap text-right">$7,292.19</div>
-        <div id="kpiCashSub" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-right">4주 기준 약 37.8회 여력</div>
-      </div>
-
-      <!-- 카드 5: 실현손익 (하단 보조 설명 없음) -->
-      <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 overflow-hidden">
-        <div class="text-[11px] font-bold text-slate-500 no-wrap">실현손익</div>
-        <div id="kpiRealized" class="text-[15px] font-extrabold text-slate-800 mt-1 tabular-nums no-wrap text-right">$0.00</div>
-      </div>
-    </section>
-
-    <!-- 3. 라오어 1.0 vs 4.0 듀얼 다음 날 주문 계산기 (자전거래 방지 상한 적용) -->
-    <section aria-label="다음 날 주문 계산기" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <!-- Ver 1.0 카드 -->
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-        <div class="bg-slate-800 text-white px-4 py-3.5 flex items-center justify-between gap-2">
+    <!-- =========================================================
+         VIEW 1: 종합 투자현황 뷰 (OVERVIEW)
+    ========================================================== -->
+    <div id="overviewView" class="space-y-5 hidden">
+      <!-- 총 투자원금 및 원금 배분 현황 카드 -->
+      <section aria-label="총 투자원금 및 배분 현황" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
           <div>
-            <div class="flex items-center gap-2">
-              <span class="px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-indigo-500 text-white">Ver 1.0</span>
-              <h3 class="font-bold text-sm">고정 분할 · 단순 익절 전략</h3>
-            </div>
-            <p id="v1Subtitle" class="text-[11px] text-slate-300 mt-1 tabular-nums">1회기준 $187.13 · 금액진행 1.03회차</p>
+            <h2 class="text-sm sm:text-base font-extrabold text-slate-900 flex items-center gap-2">
+              <span class="w-1.5 h-4 bg-indigo-600 rounded-full"></span>
+              총 투자원금 및 종목별 비중 배분 현황
+            </h2>
+            <p class="text-xs text-slate-500 mt-0.5">전체 투자원금을 설정하면 각 종목 탭의 투자 비중(%)에 따라 종목별 투자운영금이 자동 계산됩니다.</p>
           </div>
-          <button type="button" onclick="copyOrders('v1')" class="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-white transition no-wrap cursor-pointer">
-            주문표 복사
+          <button type="button" onclick="refreshAllTickersLive()" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition no-wrap cursor-pointer">
+            전 종목 시세 · 환율 일괄조회
           </button>
         </div>
-        <div id="v1Body" class="p-4 space-y-3 text-sm flex-1 tabular-nums"></div>
-      </div>
 
-      <!-- Ver 4.0 카드 -->
-      <div class="bg-white rounded-2xl shadow-sm border border-blue-200 overflow-hidden flex flex-col">
-        <div class="bg-blue-900 text-white px-4 py-3.5 flex items-center justify-between gap-2">
-          <div>
-            <div class="flex items-center gap-2">
-              <span class="px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-sky-400 text-slate-950">Ver 4.0</span>
-              <h3 class="font-bold text-sm">동적 1회매수금 · 별지점(☆%) 전략</h3>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
+          <!-- 총 투자원금 입력 & 적용환율 -->
+          <div class="lg:col-span-5 grid grid-cols-2 gap-3">
+            <div class="form-field">
+              <label for="ovTotalKrwInput" class="text-[11px] font-bold text-slate-500 mb-1 no-wrap">총 투자원금 (원)</label>
+              <input id="ovTotalKrwInput" type="text" inputmode="numeric" value="10,000,000"
+                oninput="formatKrwInput(this)" onchange="updateTotalCapitalFromOverview()"
+                class="form-control font-extrabold text-indigo-700 tabular-nums text-center text-sm" />
             </div>
-            <p id="v4Subtitle" class="text-[11px] text-sky-200 mt-1 tabular-nums">전반전 (T &lt; 20) · 별% +19.00% · 별지점 $57.37</p>
+            <div class="form-field">
+              <label for="ovExchangeRateInput" class="text-[11px] font-bold text-slate-500 mb-1 no-wrap">기준 환율 (원/$)</label>
+              <input id="ovExchangeRateInput" type="text" inputmode="decimal" value="1,336"
+                oninput="formatDecimalCommaInput(this)" onchange="updateGlobalRateFromOverview()"
+                class="form-control font-bold text-slate-800 tabular-nums text-center text-sm" />
+            </div>
           </div>
-          <button type="button" onclick="copyOrders('v4')" class="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-white transition no-wrap cursor-pointer">
-            주문표 복사
-          </button>
+
+          <!-- 배분 진행 바 & 미배정 원금 요약 -->
+          <div class="lg:col-span-7 bg-slate-50 rounded-xl p-3.5 border border-slate-200/80 space-y-2">
+            <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-slate-700">총 투자 비중 합계:</span>
+                <span id="ovAllocPctBadge" class="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-extrabold tabular-nums">100.0%</span>
+              </div>
+              <div class="tabular-nums text-slate-600 font-semibold">
+                배정 <span id="ovAllocatedKrwText" class="font-extrabold text-slate-900">10,000,000원</span>
+                <span class="mx-1 text-slate-300">|</span>
+                미배정 <span id="ovUnallocatedKrwText" class="font-extrabold text-indigo-600">0원</span>
+              </div>
+            </div>
+
+            <div class="w-full h-2.5 rounded-full bg-slate-200 overflow-hidden">
+              <div id="ovAllocProgressBar" class="h-full bg-emerald-500 rounded-full transition-all duration-300" style="width: 100%;"></div>
+            </div>
+
+            <p id="ovAllocWarning" class="hidden text-[11px] font-bold text-rose-600">
+              ⚠ 종목별 투자 비중 합계가 100%를 초과했습니다. 각 종목 탭에서 투자 비중(%)을 조정해 주세요.
+            </p>
+          </div>
         </div>
-        <div id="v4Body" class="p-4 space-y-3 text-sm flex-1 tabular-nums"></div>
-      </div>
-    </section>
+      </section>
 
-    <!-- 4. 일일 매수·매도 체결 결과 입력 폼 -->
-    <section aria-label="일일 체결 결과 입력" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5">
-      <div class="flex flex-wrap items-center justify-between gap-2 mb-3.5">
-        <h2 class="text-sm font-extrabold text-slate-800 flex items-center gap-1.5">
-          <span class="w-1.5 h-4 bg-emerald-600 rounded-full"></span>
-          일일 매수 · 매도 체결 결과 입력
-        </h2>
-        <span class="text-xs text-slate-400">체결 후 입력하면 평단가·잔고·다음 날 주문표가 자동 갱신됩니다</span>
-      </div>
-
-      <!-- 3단 반응형 균등 그리드 (날짜 칸 겹침 방지) -->
-      <div class="input-grid">
-        <div class="form-field">
-          <label for="txDate" class="text-xs font-bold text-slate-600 mb-1">거래일자</label>
-          <input id="txDate" type="date" class="form-control tabular-nums" />
-        </div>
-
-        <div class="form-field">
-          <label for="txType" class="text-xs font-bold text-slate-600 mb-1">매매구분</label>
-          <select id="txType" class="form-control font-bold" onchange="updateTxPreview()">
-            <option value="BUY">매수 (LOC / 지정가)</option>
-            <option value="SELL_PART">부분매도 (쿼터 LOC / 리버스)</option>
-            <option value="SELL_ALL">전량익절 (사이클 종료)</option>
-          </select>
-        </div>
-
-        <div class="form-field">
-          <label for="txPrice" class="text-xs font-bold text-slate-600 mb-1">체결단가 ($)</label>
-          <input id="txPrice" type="number" step="0.01" min="0.01" placeholder="예: 47.50" class="form-control font-bold tabular-nums" oninput="updateTxPreview()" />
+      <!-- 종합 6대 핵심 KPI 요약 카드 -->
+      <section aria-label="종합 포트폴리오 요약 지표" class="kpi-scroll text-center">
+        <!-- 1) 총 매수원금 -->
+        <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 overflow-hidden text-center">
+          <div class="text-[11px] font-bold text-slate-500 no-wrap text-center">총 매수원금</div>
+          <div id="ovKpiCostUsd" class="text-[15px] font-extrabold text-slate-900 mt-1 tabular-nums no-wrap text-center">$192.84</div>
+          <div id="ovKpiCostKrw" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-center">약 257,634원</div>
         </div>
 
-        <div class="form-field">
-          <label for="txQty" class="text-xs font-bold text-slate-600 mb-1">체결수량 (주)</label>
-          <input id="txQty" type="number" step="1" min="1" placeholder="예: 4" class="form-control font-bold tabular-nums" oninput="updateTxPreview()" />
+        <!-- 2) 총 평가금액 · 수익률 -->
+        <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 overflow-hidden text-center">
+          <div class="text-[11px] font-bold text-slate-500 no-wrap text-center">총 평가금액 · 수익률</div>
+          <div id="ovKpiEvalUsd" class="text-[15px] font-extrabold text-slate-800 mt-1 tabular-nums no-wrap text-center">$192.84 (0.00%)</div>
+          <div id="ovKpiEvalKrw" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-center">약 257,634원</div>
         </div>
 
-        <div class="form-field">
-          <label for="txTMode" class="text-xs font-bold text-slate-600 mb-1">4.0 T값 반영 방식</label>
-          <div class="flex gap-1.5">
-            <select id="txTMode" class="form-control font-semibold" onchange="toggleCustomTInput(); updateTxPreview();">
-              <option value="AUTO">자동계산 (목표수량 비율)</option>
-              <option value="CUSTOM">직접입력</option>
+        <!-- 3) 총 평가손익 -->
+        <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 overflow-hidden text-center">
+          <div class="text-[11px] font-bold text-slate-500 no-wrap text-center">총 평가손익</div>
+          <div id="ovKpiUnrealizedUsd" class="text-[15px] font-extrabold text-slate-800 mt-1 tabular-nums no-wrap text-center">$0.00</div>
+          <div id="ovKpiUnrealizedKrw" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-center">약 0원</div>
+        </div>
+
+        <!-- 4) 총 잔여 예수금 -->
+        <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 overflow-hidden text-center">
+          <div class="text-[11px] font-bold text-slate-500 no-wrap text-center">총 잔여 예수금</div>
+          <div id="ovKpiCashUsd" class="text-[15px] font-extrabold text-slate-900 mt-1 tabular-nums no-wrap text-center">$7,292.19</div>
+          <div id="ovKpiCashKrw" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-center">약 9,742,366원</div>
+        </div>
+
+        <!-- 5) 운영금 대비 수익률 -->
+        <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 overflow-hidden text-center">
+          <div class="text-[11px] font-bold text-slate-500 no-wrap text-center">운영금 대비 수익률</div>
+          <div id="ovKpiCapYieldPct" class="text-[15px] font-extrabold text-slate-800 mt-1 tabular-nums no-wrap text-center">0.00%</div>
+          <div id="ovKpiCapYieldSub" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-center">총손익 $0.00</div>
+        </div>
+
+        <!-- 6) 총 실현손익 · 실현수익률 -->
+        <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 overflow-hidden text-center">
+          <div class="text-[11px] font-bold text-slate-500 no-wrap text-center">총 실현손익 · 실현수익률</div>
+          <div id="ovKpiRealizedUsd" class="text-[15px] font-extrabold text-slate-800 mt-1 tabular-nums no-wrap text-center">$0.00 (0.00%)</div>
+          <div id="ovKpiRealizedKrw" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-center">약 0원</div>
+        </div>
+      </section>
+
+      <!-- 종목별 운용 현황 요약표 -->
+      <section aria-label="종목별 운용 현황 요약표" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="px-4 py-3.5 border-b border-slate-200 flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <h3 class="text-sm font-extrabold text-slate-800">종목별 운용 현황 요약표</h3>
+            <span id="ovTickerCountBadge" class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-indigo-50 text-indigo-700 tabular-nums">1종목</span>
+          </div>
+          <span class="text-xs text-slate-400">행 클릭 시 해당 종목 상세 탭으로 이동</span>
+        </div>
+        <div class="table-wrap">
+          <table id="overviewTable" class="w-full text-xs border-collapse">
+            <thead>
+              <tr class="bg-slate-50 text-slate-600 border-b border-slate-200">
+                <th class="py-3 px-3 font-extrabold text-center no-wrap">종목</th>
+                <th class="py-3 px-3 font-extrabold text-center no-wrap">투자 비중</th>
+                <th class="py-3 px-3 font-extrabold text-center no-wrap">투자운영금</th>
+                <th class="py-3 px-3 font-extrabold text-center no-wrap">현재가</th>
+                <th class="py-3 px-3 font-extrabold text-center no-wrap">보유수량</th>
+                <th class="py-3 px-3 font-extrabold text-center no-wrap">매입평단</th>
+                <th class="py-3 px-3 font-extrabold text-center no-wrap">평가손익 / 수익률</th>
+                <th class="py-3 px-3 font-extrabold text-center no-wrap">잔여예수금</th>
+                <th class="py-3 px-3 font-extrabold text-center no-wrap">실현손익 / 실현수익률</th>
+                <th class="py-3 px-3 font-extrabold text-center no-wrap">운영금대비 수익률</th>
+                <th class="py-3 px-3 font-extrabold text-center no-wrap">4.0 진행도(T)</th>
+              </tr>
+            </thead>
+            <tbody id="overviewTableBody" class="divide-y divide-slate-100 tabular-nums"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <!-- =========================================================
+         VIEW 2: 개별 종목 상세 뷰 (TICKER DETAIL)
+    ========================================================== -->
+    <div id="tickerDetailView" class="space-y-5">
+
+      <!-- 1. 기초 운용 설정 (투자 비중 % 포함 7개 항목 인라인 직접 수정 패널) -->
+      <section aria-label="기초 운용 설정" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <h2 class="text-sm font-extrabold text-slate-800 flex items-center gap-1.5">
+            <span class="w-1.5 h-4 bg-blue-600 rounded-full"></span>
+            기초 운용 설정 (직접 입력 · 즉시 반영)
+          </h2>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <!-- 총 투자원금 기준 비중 재계산 버튼 -->
+            <button type="button" onclick="recalcCapitalFromAllocation(true)" title="총 투자원금 × 투자 비중(%)으로 투자운영금을 다시 계산합니다"
+              class="px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 text-xs font-extrabold transition no-wrap cursor-pointer">
+              비중재계산
+            </button>
+
+            <!-- 일일 주문 산출 모드 전환 토글 -->
+            <div class="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200 text-xs">
+              <button type="button" id="modeFixedBtn" onclick="setOrderMode('fixed')" class="px-3 py-1 rounded-lg font-bold bg-white text-blue-600 shadow-xs transition no-wrap cursor-pointer">
+                고정수량 기준
+              </button>
+              <button type="button" id="modeAmountBtn" onclick="setOrderMode('amount')" class="px-3 py-1 rounded-lg font-medium text-slate-600 hover:text-slate-900 transition no-wrap cursor-pointer">
+                금액자동 분할
+              </button>
+            </div>
+
+            <!-- 일일 목표 수량 스테퍼 (- 4주 +) -->
+            <div id="fixedQtyStepper" class="inline-flex items-center bg-slate-100 border border-slate-200 rounded-xl px-2 py-1 text-xs">
+              <span class="text-slate-500 font-semibold mr-1.5 no-wrap">일일목표</span>
+              <button type="button" onclick="changeTargetQty(-1)" aria-label="목표 수량 1주 감소" class="w-6 h-6 rounded-lg bg-white border border-slate-200 font-extrabold text-slate-700 hover:bg-slate-50 active:scale-95 transition cursor-pointer">-</button>
+              <span id="targetQtyDisplay" class="px-2.5 font-extrabold text-blue-600 tabular-nums no-wrap">4주</span>
+              <button type="button" onclick="changeTargetQty(1)" aria-label="목표 수량 1주 증가" class="w-6 h-6 rounded-lg bg-white border border-slate-200 font-extrabold text-slate-700 hover:bg-slate-50 active:scale-95 transition cursor-pointer">+</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 7개 핵심 파라미터 1행 배치 -->
+        <div class="grid grid-cols-7 gap-2 overflow-x-auto pb-1">
+          <div class="form-field min-w-[84px]">
+            <label for="cfgTicker" class="text-[11px] font-bold text-slate-500 mb-1 no-wrap text-center">종목 (Ticker)</label>
+            <input id="cfgTicker" type="text" maxlength="12" class="form-control uppercase font-extrabold text-blue-700 px-2 text-xs sm:text-sm text-center" value="SOXL" onchange="updateBasicConfig('ticker')" />
+          </div>
+
+          <div class="form-field min-w-[86px]">
+            <label for="cfgAllocPct" class="text-[11px] font-bold text-indigo-600 mb-1 no-wrap text-center">투자 비중 (%)</label>
+            <input id="cfgAllocPct" type="number" step="0.1" min="0" max="100" class="form-control font-extrabold text-indigo-700 bg-indigo-50/40 tabular-nums px-2 text-xs sm:text-sm text-center" value="100" onchange="updateBasicConfig('allocPct')" />
+          </div>
+
+          <div class="form-field min-w-[112px]">
+            <label for="cfgKrw" class="text-[11px] font-bold text-slate-500 mb-1 no-wrap text-center">투자운영금 (원)</label>
+            <input id="cfgKrw" type="text" inputmode="numeric" readonly tabindex="-1" title="총 투자원금 × 투자 비중(%)으로 자동 계산됩니다" class="form-control font-bold tabular-nums px-2 text-xs sm:text-sm text-center bg-slate-100 text-slate-600 cursor-not-allowed select-none" value="10,000,000" />
+          </div>
+
+          <div class="form-field min-w-[92px]">
+            <label for="cfgRate" class="text-[11px] font-bold text-slate-500 mb-1 no-wrap text-center">적용환율 (원/$)</label>
+            <input id="cfgRate" type="text" inputmode="decimal" class="form-control font-bold tabular-nums px-2 text-xs sm:text-sm text-center" value="1,336" oninput="formatDecimalCommaInput(this)" onchange="updateBasicConfig('rate')" />
+          </div>
+
+          <div class="form-field min-w-[104px]">
+            <label for="cfgUsd" class="text-[11px] font-bold text-slate-500 mb-1 no-wrap text-center">달러원금 ($)</label>
+            <input id="cfgUsd" type="text" inputmode="decimal" class="form-control font-extrabold text-blue-700 tabular-nums px-2 text-xs sm:text-sm text-center" value="7,485.03" oninput="formatDecimalCommaInput(this)" onchange="updateBasicConfig('usd')" />
+          </div>
+
+          <div class="form-field min-w-[80px]">
+            <label for="cfgSplits" class="text-[11px] font-bold text-slate-500 mb-1 no-wrap text-center">분할수 (40)</label>
+            <input id="cfgSplits" type="number" min="10" max="100" class="form-control font-bold tabular-nums px-2 text-xs sm:text-sm text-center" value="40" onchange="updateBasicConfig('splits')" />
+          </div>
+
+          <div class="form-field min-w-[144px]">
+            <div class="flex items-center gap-1 mb-1">
+              <label for="currentPriceInput" class="flex-1 text-[11px] font-bold text-slate-500 no-wrap text-center">실시간 현재가 ($)</label>
+              <span aria-hidden="true" class="px-2.5 text-xs font-bold opacity-0 pointer-events-none select-none shrink-0 no-wrap">조회</span>
+            </div>
+            <div class="flex gap-1">
+              <input id="currentPriceInput" type="text" inputmode="decimal" class="form-control font-extrabold text-emerald-700 tabular-nums px-2 text-xs sm:text-sm text-center" value="48.21" onkeydown="if(event.key==='Enter'){ event.preventDefault(); applyCurrentPrice(); }" />
+              <button type="button" onclick="applyCurrentPrice()" title="입력한 현재가 반영 (빈칸일 경우 API 조회)" class="px-2.5 h-[44px] rounded-[10px] bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold shrink-0 transition no-wrap cursor-pointer">
+                조회
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. 상단 6대 핵심 KPI 요약 카드 (1행 고정 · 줄바꿈 금지 · 가운데 정렬 · 15px/10px) -->
+      <section aria-label="포트폴리오 요약 지표" class="kpi-scroll text-center">
+        <!-- 카드 1: 보유수량 -->
+        <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 overflow-hidden text-center">
+          <div class="text-[11px] font-bold text-slate-500 no-wrap text-center">보유수량</div>
+          <div id="kpiQty" class="text-[15px] font-extrabold text-slate-900 mt-1 tabular-nums no-wrap text-center">4 주</div>
+          <div id="kpiQtySub" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-center">매수원금 $192.84</div>
+        </div>
+
+        <!-- 카드 2: 매입평단 -->
+        <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 overflow-hidden text-center">
+          <div class="text-[11px] font-bold text-slate-500 no-wrap text-center">매입평단</div>
+          <div id="kpiAvg" class="text-[15px] font-extrabold text-blue-600 mt-1 tabular-nums no-wrap text-center">$48.21</div>
+          <div id="kpiAvgSub" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-center">원화 약 64,409원</div>
+        </div>
+
+        <!-- 카드 3: 현재가 · 수익률(%) -->
+        <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 overflow-hidden text-center">
+          <div class="text-[11px] font-bold text-slate-500 no-wrap text-center">현재가 · 수익률(%)</div>
+          <div id="kpiEval" class="text-[15px] font-extrabold text-slate-800 mt-1 tabular-nums no-wrap text-center">$48.21 (0.00%)</div>
+          <div id="kpiEvalSub" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-center truncate">손익 $0.00 · 평가 $192.84</div>
+        </div>
+
+        <!-- 카드 4: 잔여 예수금 -->
+        <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 overflow-hidden text-center">
+          <div class="text-[11px] font-bold text-slate-500 no-wrap text-center">잔여 예수금</div>
+          <div id="kpiCash" class="text-[15px] font-extrabold text-slate-900 mt-1 tabular-nums no-wrap text-center">$7,292.19</div>
+          <div id="kpiCashSub" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-center">4주 기준 약 37.8회 여력</div>
+        </div>
+
+        <!-- 카드 5: 운영금 대비 수익률 -->
+        <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 overflow-hidden text-center">
+          <div class="text-[11px] font-bold text-slate-500 no-wrap text-center">운영금 대비 수익률</div>
+          <div id="kpiCapitalYieldPct" class="text-[15px] font-extrabold text-slate-800 mt-1 tabular-nums no-wrap text-center">0.00%</div>
+          <div id="kpiCapitalYieldSub" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-center">총손익 $0.00</div>
+        </div>
+
+        <!-- 카드 6: 실현손익 · 실현수익률 -->
+        <div class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 overflow-hidden text-center">
+          <div class="text-[11px] font-bold text-slate-500 no-wrap text-center">실현손익 · 실현수익률</div>
+          <div id="kpiRealized" class="text-[15px] font-extrabold text-slate-800 mt-1 tabular-nums no-wrap text-center">$0.00 (0.00%)</div>
+          <div id="kpiRealizedSub" class="text-[10px] text-slate-400 mt-1 tabular-nums no-wrap text-center">원화 약 0원</div>
+        </div>
+      </section>
+
+      <!-- 3. 라오어 1.0 vs 4.0 듀얼 다음 날 주문 계산기 (자전거래 방지 상한 적용) -->
+      <section aria-label="다음 날 주문 계산기" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <!-- Ver 1.0 카드 -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+          <div class="bg-slate-800 text-white px-4 py-3.5 flex items-center justify-between gap-2">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-indigo-500 text-white">Ver 1.0</span>
+                <h3 class="font-bold text-sm">고정 분할 · 단순 익절 전략</h3>
+              </div>
+              <p id="v1Subtitle" class="text-[11px] text-slate-300 mt-1 tabular-nums">1회기준 $187.13 · 금액진행 1.03회차</p>
+            </div>
+            <button type="button" onclick="copyOrders('v1')" class="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-white transition no-wrap cursor-pointer">
+              주문표 복사
+            </button>
+          </div>
+          <div id="v1Body" class="p-4 space-y-3 text-sm flex-1 tabular-nums"></div>
+        </div>
+
+        <!-- Ver 4.0 카드 -->
+        <div class="bg-white rounded-2xl shadow-sm border border-blue-200 overflow-hidden flex flex-col">
+          <div class="bg-blue-900 text-white px-4 py-3.5 flex items-center justify-between gap-2">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-sky-400 text-slate-950">Ver 4.0</span>
+                <h3 class="font-bold text-sm">동적 1회매수금 · 별지점(☆%) 전략</h3>
+              </div>
+              <p id="v4Subtitle" class="text-[11px] text-sky-200 mt-1 tabular-nums">전반전 (T &lt; 20) · 별% +19.00% · 별지점 $57.37</p>
+            </div>
+            <button type="button" onclick="copyOrders('v4')" class="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-white transition no-wrap cursor-pointer">
+              주문표 복사
+            </button>
+          </div>
+          <div id="v4Body" class="p-4 space-y-3 text-sm flex-1 tabular-nums"></div>
+        </div>
+      </section>
+
+      <!-- 4. 일일 매수·매도 체결 결과 입력 폼 -->
+      <section aria-label="일일 체결 결과 입력" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3.5">
+          <h2 class="text-sm font-extrabold text-slate-800 flex items-center gap-1.5">
+            <span class="w-1.5 h-4 bg-emerald-600 rounded-full"></span>
+            일일 매수 · 매도 체결 결과 입력
+          </h2>
+          <span class="text-xs text-slate-400">체결 후 입력하면 평단가·잔고·다음 날 주문표가 자동 갱신됩니다</span>
+        </div>
+
+        <!-- 3단 반응형 균등 그리드 (날짜 칸 겹침 방지) -->
+        <div class="input-grid">
+          <div class="form-field">
+            <label for="txDate" class="text-xs font-bold text-slate-600 mb-1">거래일자</label>
+            <input id="txDate" type="date" class="form-control tabular-nums" />
+          </div>
+
+          <div class="form-field">
+            <label for="txType" class="text-xs font-bold text-slate-600 mb-1">매매구분</label>
+            <select id="txType" class="form-control font-bold" onchange="updateTxPreview()">
+              <option value="BUY">매수 (LOC / 지정가)</option>
+              <option value="SELL_PART">부분매도 (쿼터 LOC / 리버스)</option>
+              <option value="SELL_ALL">전량익절 (사이클 종료)</option>
             </select>
-            <input id="txCustomT" type="number" step="0.01" placeholder="+1.0" class="form-control hidden font-extrabold text-blue-600 tabular-nums" style="max-width: 96px;" oninput="updateTxPreview()" />
+          </div>
+
+          <div class="form-field">
+            <label for="txPrice" class="text-xs font-bold text-slate-600 mb-1">체결단가 ($)</label>
+            <input id="txPrice" type="number" step="0.01" min="0.01" placeholder="예: 47.50" class="form-control font-bold tabular-nums" oninput="updateTxPreview()" />
+          </div>
+
+          <div class="form-field">
+            <label for="txQty" class="text-xs font-bold text-slate-600 mb-1">체결수량 (주)</label>
+            <input id="txQty" type="number" step="1" min="1" placeholder="예: 4" class="form-control font-bold tabular-nums" oninput="updateTxPreview()" />
+          </div>
+
+          <div class="form-field">
+            <label for="txTMode" class="text-xs font-bold text-slate-600 mb-1">4.0 T값 반영 방식</label>
+            <div class="flex gap-1.5">
+              <select id="txTMode" class="form-control font-semibold" onchange="toggleCustomTInput(); updateTxPreview();">
+                <option value="AUTO">자동계산 (목표수량 비율)</option>
+                <option value="CUSTOM">직접입력</option>
+              </select>
+              <input id="txCustomT" type="number" step="0.01" placeholder="+1.0" class="form-control hidden font-extrabold text-blue-600 tabular-nums" style="max-width: 96px;" oninput="updateTxPreview()" />
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label class="text-xs font-bold text-slate-600 mb-1">예상 체결금액 및 T 변동</label>
+            <div id="txPreviewBox" class="h-[44px] px-3 rounded-[10px] bg-slate-50 border border-slate-200 flex items-center justify-between text-xs font-bold text-slate-700 tabular-nums">
+              <span>$0.00</span>
+              <span class="text-blue-600">T +0.00</span>
+            </div>
           </div>
         </div>
 
-        <div class="form-field">
-          <label class="text-xs font-bold text-slate-600 mb-1">예상 체결금액 및 T 변동</label>
-          <div id="txPreviewBox" class="h-[44px] px-3 rounded-[10px] bg-slate-50 border border-slate-200 flex items-center justify-between text-xs font-bold text-slate-700 tabular-nums">
-            <span>$0.00</span>
-            <span class="text-blue-600">T +0.00</span>
+        <!-- 메모 입력 및 반영 버튼 -->
+        <div class="mt-3.5 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <input id="txMemo" type="text" placeholder="메모 (예: 전반전 평단 LOC 2주 + 별지점 LOC 2주 전량 체결)" class="form-control flex-1" />
+          <button type="button" onclick="addTransaction()" class="h-[44px] px-6 rounded-[10px] bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-extrabold text-sm shadow-sm transition shrink-0 no-wrap cursor-pointer">
+            + 체결 내역 반영
+          </button>
+        </div>
+      </section>
+
+      <!-- 5. 누적 매매 일지 테이블 -->
+      <section aria-label="누적 매매 일지" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="px-4 py-3.5 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <h2 class="text-sm font-extrabold text-slate-800">누적 매매 일지</h2>
+            <span id="logCountBadge" class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-slate-100 text-slate-600 tabular-nums">1건</span>
           </div>
+          <button type="button" onclick="resetCurrentTickerToDefault()" class="px-3 py-1.5 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold transition no-wrap cursor-pointer">
+            초기 데이터 복원
+          </button>
         </div>
-      </div>
 
-      <!-- 메모 입력 및 반영 버튼 -->
-      <div class="mt-3.5 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-        <input id="txMemo" type="text" placeholder="메모 (예: 전반전 평단 LOC 2주 + 별지점 LOC 2주 전량 체결)" class="form-control flex-1" />
-        <button type="button" onclick="addTransaction()" class="h-[44px] px-6 rounded-[10px] bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-extrabold text-sm shadow-sm transition shrink-0 no-wrap cursor-pointer">
-          + 체결 내역 반영
-        </button>
-      </div>
-    </section>
-
-    <!-- 5. 누적 매매 일지 테이블 -->
-    <section aria-label="누적 매매 일지" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-      <div class="px-4 py-3.5 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
-        <div class="flex items-center gap-2">
-          <h2 class="text-sm font-extrabold text-slate-800">누적 매매 일지</h2>
-          <span id="logCountBadge" class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-slate-100 text-slate-600 tabular-nums">1건</span>
+        <div class="table-wrap">
+          <table id="journalTable" class="w-full text-xs border-collapse">
+            <thead>
+              <tr class="bg-slate-50 text-slate-600 border-b border-slate-200">
+                <th class="py-3 px-3 font-extrabold text-center no-wrap" style="min-width:144px; width:144px;">No / 날짜</th>
+                <th class="py-3 px-3 font-extrabold text-center no-wrap">구분</th>
+                <th class="py-3 px-3 font-extrabold text-center no-wrap">체결가</th>
+                <th class="py-3 px-3 font-extrabold text-center no-wrap">수량</th>
+                <th class="py-3 px-3 font-extrabold text-center no-wrap">체결금액</th>
+                <th class="py-3 px-3 font-extrabold text-center no-wrap">누적수량</th>
+                <th class="py-3 px-3 font-extrabold text-center no-wrap">매입평단</th>
+                <th class="py-3 px-3 font-extrabold text-center no-wrap">4.0 T값</th>
+                <th class="py-3 px-3 font-extrabold text-center no-wrap">잔여예수금</th>
+                <th class="py-3 px-3 font-extrabold text-center no-wrap">실현손익</th>
+                <th class="py-3 px-3 font-extrabold text-center no-wrap" style="min-width:175px; width:175px;">메모 (클릭 전체보기)</th>
+                <th class="py-3 px-3 font-extrabold text-center no-wrap">삭제</th>
+              </tr>
+            </thead>
+            <tbody id="txTableBody" class="divide-y divide-slate-100 tabular-nums"></tbody>
+          </table>
         </div>
-        <button type="button" onclick="resetToDefault()" class="px-3 py-1.5 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold transition no-wrap cursor-pointer">
-          초기 데이터 복원
-        </button>
-      </div>
-
-      <div class="table-wrap">
-        <table id="journalTable" class="w-full text-xs border-collapse">
-          <thead>
-            <tr class="bg-slate-50 text-slate-600 border-b border-slate-200">
-              <th class="py-3 px-3 font-extrabold text-center no-wrap" style="min-width:144px; width:144px;">No / 날짜</th>
-              <th class="py-3 px-3 font-extrabold text-center no-wrap">구분</th>
-              <th class="py-3 px-3 font-extrabold text-center no-wrap">체결가</th>
-              <th class="py-3 px-3 font-extrabold text-center no-wrap">수량</th>
-              <th class="py-3 px-3 font-extrabold text-center no-wrap">체결금액</th>
-              <th class="py-3 px-3 font-extrabold text-center no-wrap">누적수량</th>
-              <th class="py-3 px-3 font-extrabold text-center no-wrap">매입평단</th>
-              <th class="py-3 px-3 font-extrabold text-center no-wrap">4.0 T값</th>
-              <th class="py-3 px-3 font-extrabold text-center no-wrap">잔여예수금</th>
-              <th class="py-3 px-3 font-extrabold text-center no-wrap">실현손익</th>
-              <th class="py-3 px-3 font-extrabold text-center no-wrap" style="min-width:175px; width:175px;">메모 (클릭 전체보기)</th>
-              <th class="py-3 px-3 font-extrabold text-center no-wrap">삭제</th>
-            </tr>
-          </thead>
-          <tbody id="txTableBody" class="divide-y divide-slate-100 tabular-nums"></tbody>
-        </table>
-      </div>
-    </section>
+      </section>
+    </div>
 
   </main>
 
@@ -495,6 +683,57 @@
     </div>
   </div>
 
+  <!-- 모달 3: 신규 종목 추가 -->
+  <div id="addTickerModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4" onclick="if(event.target===this) closeAddTickerModal()">
+    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden" onclick="event.stopPropagation()">
+      <div class="px-5 py-4 bg-slate-900 text-white flex items-center justify-between">
+        <div>
+          <span class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400 block">Add New Ticker</span>
+          <h3 class="font-extrabold text-base">신규 무한매수 종목 추가</h3>
+        </div>
+        <button type="button" onclick="closeAddTickerModal()" class="text-slate-400 hover:text-white text-2xl leading-none px-1 cursor-pointer">&times;</button>
+      </div>
+
+      <div class="p-5 space-y-3.5">
+        <div class="grid grid-cols-2 gap-3">
+          <div class="form-field">
+            <label for="newTickerSymbol" class="text-xs font-extrabold text-slate-700 mb-1">종목 티커 (Ticker)</label>
+            <input id="newTickerSymbol" type="text" maxlength="12" placeholder="예: TQQQ" class="form-control uppercase font-extrabold text-blue-700" />
+          </div>
+          <div class="form-field">
+            <label for="newTickerAllocPct" class="text-xs font-extrabold text-indigo-700 mb-1">총 원금 투자 비중 (%)</label>
+            <input id="newTickerAllocPct" type="number" step="0.1" min="0" max="100" value="30" oninput="previewNewTickerCapital()" class="form-control font-extrabold text-indigo-700 tabular-nums" />
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label for="newTickerKrw" class="text-xs font-extrabold text-slate-700 mb-1">투자운영금 (원 · 총 투자원금 × 투자 비중 자동계산)</label>
+          <input id="newTickerKrw" type="text" inputmode="numeric" readonly tabindex="-1" value="3,000,000" class="form-control font-bold tabular-nums bg-slate-100 text-slate-600 cursor-not-allowed select-none" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div class="form-field">
+            <label for="newTickerSplits" class="text-xs font-extrabold text-slate-700 mb-1">분할수 (기본 40)</label>
+            <input id="newTickerSplits" type="number" min="10" max="100" value="40" class="form-control font-bold tabular-nums" />
+          </div>
+          <div class="form-field">
+            <label for="newTickerTargetQty" class="text-xs font-extrabold text-slate-700 mb-1">일일 목표수량 (주)</label>
+            <input id="newTickerTargetQty" type="number" min="1" value="4" class="form-control font-bold tabular-nums" />
+          </div>
+        </div>
+
+        <p id="newTickerHelperText" class="text-[11px] text-slate-500 bg-slate-50 p-2.5 rounded-xl border border-slate-200 tabular-nums">
+          현재 총 투자원금 10,000,000원 기준 30% = 3,000,000원 배정
+        </p>
+
+        <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
+          <button type="button" onclick="closeAddTickerModal()" class="px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-600 hover:bg-slate-50 cursor-pointer">취소</button>
+          <button type="button" onclick="confirmAddTicker()" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold shadow-sm cursor-pointer">+ 종목 추가하기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- 하단 토스트 알림 -->
   <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg opacity-0 pointer-events-none transition-opacity z-50 no-wrap"></div>
 
@@ -519,35 +758,47 @@
       }
     };
 
-    const STORAGE_KEY = 'laor_infinite_buy_state_v8';
+    const STORAGE_KEY = 'laor_infinite_buy_multi_v1';
+    const LEGACY_STORAGE_KEY = 'laor_infinite_buy_state_v8';
+
+    function createDefaultSoxlTicker() {
+      return {
+        id: 'ticker_soxl_default',
+        config: {
+          ticker: 'SOXL',
+          allocPct: 100,
+          krwCapital: 10000000,
+          exchangeRate: 1336,
+          usdCapital: 7485.03,
+          splits: 40,
+          orderMode: 'fixed', // 'fixed' | 'amount'
+          targetQty: 4,
+          currentPrice: 48.21
+        },
+        transactions: [
+          {
+            id: 'tx_init_1',
+            date: '2026-11-17',
+            type: 'BUY',
+            price: 48.21,
+            qty: 4,
+            tMode: 'AUTO',
+            customT: 1.0,
+            memo: '무한매수법 1일차 시작 (4주 @ $48.21 매수 체결 완료 - 1.0 & 4.0 동시 추적)'
+          }
+        ]
+      };
+    }
 
     const DEFAULT_STATE = {
-      config: {
-        ticker: 'SOXL',
-        krwCapital: 10000000,
-        exchangeRate: 1336,
-        usdCapital: 7485.03,
-        splits: 40,
-        orderMode: 'fixed', // 'fixed' | 'amount'
-        targetQty: 4,
-        currentPrice: 48.21
-      },
+      totalKrwCapital: 10000000,
+      globalExchangeRate: 1336,
+      activeTab: 'ticker_soxl_default', // 'OVERVIEW' or ticker id
       api: {
         provider: 'twelvedata', // 'twelvedata' | 'finnhub' | 'none'
         key: '1b21ff07c1d744388afedc6c1f5ec87c'
       },
-      transactions: [
-        {
-          id: 'tx_init_1',
-          date: '2026-11-17',
-          type: 'BUY',
-          price: 48.21,
-          qty: 4,
-          tMode: 'AUTO',
-          customT: 1.0,
-          memo: '무한매수법 1일차 시작 (4주 @ $48.21 매수 체결 완료 - 1.0 & 4.0 동시 추적)'
-        }
-      ]
+      tickers: [createDefaultSoxlTicker()]
     };
 
     let state = loadState();
@@ -557,25 +808,66 @@
     function loadState() {
       try {
         const raw = safeStorage.getItem(STORAGE_KEY);
-        if (!raw) return JSON.parse(JSON.stringify(DEFAULT_STATE));
-        const parsed = JSON.parse(raw);
-        return {
-          config: { ...DEFAULT_STATE.config, ...(parsed.config || {}) },
-          api: {
-            provider: (parsed.api && parsed.api.provider) ? parsed.api.provider : DEFAULT_STATE.api.provider,
-            key: (parsed.api && parsed.api.key) ? parsed.api.key : DEFAULT_STATE.api.key
-          },
-          transactions: Array.isArray(parsed.transactions)
-            ? parsed.transactions
-            : JSON.parse(JSON.stringify(DEFAULT_STATE.transactions))
-        };
-      } catch (e) {
-        return JSON.parse(JSON.stringify(DEFAULT_STATE));
-      }
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed.tickers) && parsed.tickers.length > 0) {
+            return {
+              totalKrwCapital: Number(parsed.totalKrwCapital) || 10000000,
+              globalExchangeRate: Number(parsed.globalExchangeRate) || 1336,
+              activeTab: parsed.activeTab || parsed.tickers[0].id,
+              api: {
+                provider: (parsed.api && parsed.api.provider) ? parsed.api.provider : DEFAULT_STATE.api.provider,
+                key: (parsed.api && parsed.api.key) ? parsed.api.key : DEFAULT_STATE.api.key
+              },
+              tickers: parsed.tickers.map(t => ({
+                id: t.id || ('ticker_' + Math.random().toString(36).slice(2, 7)),
+                config: {
+                  ...createDefaultSoxlTicker().config,
+                  ...(t.config || {})
+                },
+                transactions: Array.isArray(t.transactions) ? t.transactions : []
+              }))
+            };
+          }
+        }
+
+        // 이전 단일 종목 localStorage 데이터 마이그레이션
+        const legacyRaw = safeStorage.getItem(LEGACY_STORAGE_KEY);
+        if (legacyRaw) {
+          const leg = JSON.parse(legacyRaw);
+          const legCfg = { ...createDefaultSoxlTicker().config, ...(leg.config || {}), allocPct: 100 };
+          const migratedTicker = {
+            id: 'ticker_soxl_default',
+            config: legCfg,
+            transactions: Array.isArray(leg.transactions) ? leg.transactions : createDefaultSoxlTicker().transactions
+          };
+          return {
+            totalKrwCapital: Number(legCfg.krwCapital) || 10000000,
+            globalExchangeRate: Number(legCfg.exchangeRate) || 1336,
+            activeTab: 'ticker_soxl_default',
+            api: {
+              provider: (leg.api && leg.api.provider) ? leg.api.provider : DEFAULT_STATE.api.provider,
+              key: (leg.api && leg.api.key) ? leg.api.key : DEFAULT_STATE.api.key
+            },
+            tickers: [migratedTicker]
+          };
+        }
+      } catch (e) {}
+      return JSON.parse(JSON.stringify(DEFAULT_STATE));
     }
 
     function saveState() {
       safeStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function getActiveTickerObj() {
+      if (state.activeTab === 'OVERVIEW') {
+        return state.tickers[0];
+      }
+      const found = state.tickers.find(t => t.id === state.activeTab);
+      if (found) return found;
+      state.activeTab = state.tickers[0].id;
+      return state.tickers[0];
     }
 
     function showToast(msg) {
@@ -649,17 +941,18 @@
       return `<span class="ml-1.5 px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300 text-[10px] font-extrabold no-wrap" title="매수가가 매도가 이상이면 자전거래 의심으로 거절되므로 최저 매도가 - $0.01로 자동 제한되었습니다">자전방지 상한적용</span>`;
     }
 
-    // 전체 거래 내역 기반 포트폴리오 계산
-    function computePortfolio() {
-      const cfg = state.config;
+    // 특정 종목 객체 기준 포트폴리오 계산
+    function computePortfolioForTicker(tickerObj) {
+      const cfg = tickerObj.config;
       let totalQty = 0;
       let totalCost = 0;
       let cash = Number(cfg.usdCapital) || 0;
       let realizedPnL = 0;
+      let realizedCostBasis = 0;
       let tValue = 0;
       let cumulativeBuyAmount = 0;
 
-      const rows = state.transactions.map((tx, idx) => {
+      const rows = (tickerObj.transactions || []).map((tx, idx) => {
         const price = Number(tx.price) || 0;
         const qty = Number(tx.qty) || 0;
         const amount = price * qty;
@@ -681,9 +974,11 @@
           tValue = Math.max(0, Number((tValue + tDelta).toFixed(2)));
         } else if (tx.type === 'SELL_PART') {
           const sellQty = Math.min(totalQty, qty);
+          const costSold = avgBefore * sellQty;
           const pnl = (price - avgBefore) * sellQty;
           realizedPnL += pnl;
-          totalCost = Math.max(0, totalCost - avgBefore * sellQty);
+          realizedCostBasis += costSold;
+          totalCost = Math.max(0, totalCost - costSold);
           totalQty -= sellQty;
           cash += price * sellQty;
 
@@ -694,8 +989,10 @@
           }
         } else if (tx.type === 'SELL_ALL') {
           const sellQty = totalQty > 0 ? totalQty : qty;
+          const costSold = avgBefore * sellQty;
           const pnl = (price - avgBefore) * sellQty;
           realizedPnL += pnl;
+          realizedCostBasis += costSold;
           totalCost = 0;
           totalQty = 0;
           cash += price * sellQty;
@@ -718,14 +1015,26 @@
       });
 
       const avgPrice = totalQty > 0 ? totalCost / totalQty : 0;
+      const curPrice = Number(cfg.currentPrice) || 0;
+      const evalValue = curPrice * totalQty;
+      const evalPnL = totalQty > 0 ? (curPrice - avgPrice) * totalQty : 0;
+      const evalPct = avgPrice > 0 && totalQty > 0 ? ((curPrice - avgPrice) / avgPrice) * 100 : 0;
+      const realizedPct = realizedCostBasis > 0 ? (realizedPnL / realizedCostBasis) * 100 : 0;
+
       return {
         totalQty,
         totalCost,
         avgPrice,
         cash,
         realizedPnL,
+        realizedCostBasis,
+        realizedPct,
         tValue,
         cumulativeBuyAmount,
+        curPrice,
+        evalValue,
+        evalPnL,
+        evalPct,
         rows
       };
     }
@@ -733,8 +1042,8 @@
     /**
      * Ver 1.0 & Ver 4.0 다음 날 주문 계산 (자전거래 방지 상한 capBuyPrice 공통 사용)
      */
-    function calculateOrdersData(p) {
-      const cfg = state.config;
+    function calculateOrdersData(tickerObj, p) {
+      const cfg = tickerObj.config;
       const splits = Math.max(10, Number(cfg.splits) || 40);
       const baseAvg = p.avgPrice > 0 ? p.avgPrice : (Number(cfg.currentPrice) || 48.21);
       const targetQty = Math.max(1, Number(cfg.targetQty) || 4);
@@ -748,7 +1057,6 @@
 
       const v1SellPrice10 = Number((baseAvg * 1.10).toFixed(2));
       const v1SellPrice12 = Number((baseAvg * 1.12).toFixed(2));
-      // 보유 수량이 있을 경우 최저 매도가(+10% 기본 익절가) 미만으로 매수 상한 제한
       const v1MinSell = p.totalQty > 0 ? v1SellPrice10 : null;
 
       const v1AvgBuy = capBuyPrice(baseAvg, v1MinSell);
@@ -764,7 +1072,6 @@
       const quarterQty = Math.floor(p.totalQty / 4);
       const restQty = p.totalQty - quarterQty;
 
-      // 보유 수량이 있을 경우 Ver 4.0 최저 매도가(별지점 LOC 매도 vs +20% 익절 중 낮은 값)
       const v4MinSell = p.totalQty > 0 ? Math.min(starPrice, sell20Price) : null;
 
       const v4AvgBuy = capBuyPrice(baseAvg, v4MinSell);
@@ -811,12 +1118,209 @@
       };
     }
 
+    // 상단 네비게이션 탭 바 렌더링 (종합 투자현황 + 종목 탭들)
+    function renderTopNavTabs() {
+      const container = document.getElementById('topNavTabs');
+      const isOverview = state.activeTab === 'OVERVIEW';
+
+      const overviewTabHtml = `
+        <button type="button" onclick="switchTab('OVERVIEW')"
+          class="px-3.5 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition no-wrap cursor-pointer shrink-0 ${
+            isOverview
+              ? 'bg-indigo-600 text-white shadow-xs'
+              : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800'
+          }">
+          <span>📊</span>
+          <span>종합 투자현황</span>
+        </button>
+      `;
+
+      const canDelete = state.tickers.length > 1;
+      const tickerTabsHtml = state.tickers.map(tObj => {
+        const isActive = state.activeTab === tObj.id;
+        const p = computePortfolioForTicker(tObj);
+        const allocPct = Number(tObj.config.allocPct) || 0;
+        const delBtn = canDelete
+          ? `<span onclick="event.stopPropagation(); deleteTickerTab('${tObj.id}')" title="${escapeHtml(tObj.config.ticker)} 종목 삭제"
+               class="ml-1 w-4 h-4 rounded-full inline-flex items-center justify-center text-[11px] leading-none hover:bg-rose-500 hover:text-white ${isActive ? 'text-slate-400' : 'text-slate-500'}">×</span>`
+          : '';
+
+        return `
+          <div onclick="switchTab('${tObj.id}')" role="button" tabindex="0"
+            class="px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition no-wrap cursor-pointer shrink-0 select-none ${
+              isActive
+                ? 'bg-white text-slate-900 shadow-xs'
+                : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800'
+            }">
+            <span>${escapeHtml(tObj.config.ticker)}</span>
+            <span class="px-1.5 py-0.2 rounded text-[10px] font-bold ${isActive ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-800 text-indigo-300'}">${allocPct}%</span>
+            <span class="px-1.5 py-0.2 rounded text-[10px] font-bold ${isActive ? 'bg-slate-100 text-slate-700' : 'bg-slate-800 text-slate-400'}">${p.totalQty}주</span>
+            ${delBtn}
+          </div>
+        `;
+      }).join('');
+
+      container.innerHTML = overviewTabHtml + tickerTabsHtml;
+    }
+
+    function switchTab(tabId) {
+      state.activeTab = tabId;
+      saveState();
+      renderAll();
+    }
+
+    // 종합 투자현황 뷰 렌더링
+    function renderOverviewView() {
+      const totalKrw = Number(state.totalKrwCapital) || 0;
+      const globalRate = Number(state.globalExchangeRate) || 1336;
+
+      document.getElementById('ovTotalKrwInput').value = Math.round(totalKrw).toLocaleString('ko-KR');
+      document.getElementById('ovExchangeRateInput').value = formatDecimalNumber(globalRate, 2);
+
+      let sumAllocPct = 0;
+      let sumAllocKrw = 0;
+      let sumAllocUsd = 0;
+      let sumCostUsd = 0;
+      let sumEvalUsd = 0;
+      let sumUnrealizedUsd = 0;
+      let sumCashUsd = 0;
+      let sumRealizedUsd = 0;
+      let sumRealizedCostUsd = 0;
+
+      const rowsHtml = state.tickers.map(tObj => {
+        const cfg = tObj.config;
+        const p = computePortfolioForTicker(tObj);
+        const allocPct = Number(cfg.allocPct) || 0;
+        const capUsd = Number(cfg.usdCapital) || 0;
+        const totalPnLUsd = p.evalPnL + p.realizedPnL;
+        const capYieldPct = capUsd > 0 ? (totalPnLUsd / capUsd) * 100 : 0;
+
+        sumAllocPct += allocPct;
+        sumAllocKrw += Number(cfg.krwCapital) || 0;
+        sumAllocUsd += capUsd;
+        sumCostUsd += p.totalCost;
+        sumEvalUsd += p.evalValue;
+        sumUnrealizedUsd += p.evalPnL;
+        sumCashUsd += p.cash;
+        sumRealizedUsd += p.realizedPnL;
+        sumRealizedCostUsd += p.realizedCostBasis;
+
+        const signPct = p.evalPct > 0 ? '+' : '';
+        const signPnl = p.evalPnL > 0 ? '+' : '';
+        const pnlColor = p.evalPnL > 0 ? 'text-emerald-600' : p.evalPnL < 0 ? 'text-rose-600' : 'text-slate-600';
+        const rSign = p.realizedPnL > 0 ? '+' : '';
+        const rPctSign = p.realizedPct > 0 ? '+' : '';
+        const rColor = p.realizedPnL > 0 ? 'text-emerald-600' : p.realizedPnL < 0 ? 'text-rose-600' : 'text-slate-600';
+        const cySign = capYieldPct > 0 ? '+' : '';
+        const cyColor = capYieldPct > 0 ? 'text-emerald-600' : capYieldPct < 0 ? 'text-rose-600' : 'text-slate-600';
+
+        return `
+          <tr onclick="switchTab('${tObj.id}')" class="hover:bg-indigo-50/50 transition cursor-pointer">
+            <td class="py-3 px-3 text-center font-extrabold text-blue-700 no-wrap">${escapeHtml(cfg.ticker)}</td>
+            <td class="py-3 px-3 text-center font-extrabold text-indigo-700 no-wrap">${allocPct.toFixed(1)}%</td>
+            <td class="py-3 px-3 text-right font-semibold text-slate-700 no-wrap">
+              ${fmtKrw(cfg.krwCapital)} <span class="text-slate-400 text-[11px]">(${fmtUsd(cfg.usdCapital)})</span>
+            </td>
+            <td class="py-3 px-3 text-right font-bold text-slate-900 no-wrap">${fmtUsd(p.curPrice)}</td>
+            <td class="py-3 px-3 text-right font-bold text-slate-800 no-wrap">${p.totalQty.toLocaleString()}주</td>
+            <td class="py-3 px-3 text-right font-bold text-blue-600 no-wrap">${p.totalQty > 0 ? fmtUsd(p.avgPrice) : '-'}</td>
+            <td class="py-3 px-3 text-right font-extrabold ${pnlColor} no-wrap">
+              ${signPnl}${fmtUsd(p.evalPnL)} (${signPct}${p.evalPct.toFixed(2)}%)
+            </td>
+            <td class="py-3 px-3 text-right font-semibold text-slate-700 no-wrap">${fmtUsd(p.cash)}</td>
+            <td class="py-3 px-3 text-right font-bold ${rColor} no-wrap">${rSign}${fmtUsd(p.realizedPnL)} (${rPctSign}${p.realizedPct.toFixed(2)}%)</td>
+            <td class="py-3 px-3 text-right font-extrabold ${cyColor} no-wrap">${cySign}${capYieldPct.toFixed(2)}%</td>
+            <td class="py-3 px-3 text-center font-extrabold text-indigo-600 no-wrap">T = ${p.tValue.toFixed(2)} / ${cfg.splits}</td>
+          </tr>
+        `;
+      }).join('');
+
+      document.getElementById('overviewTableBody').innerHTML = rowsHtml;
+      document.getElementById('ovTickerCountBadge').textContent = `${state.tickers.length}종목`;
+
+      // 배분 진행률 바 업데이트
+      const unallocKrw = totalKrw - sumAllocKrw;
+      const pctBadge = document.getElementById('ovAllocPctBadge');
+      const progBar = document.getElementById('ovAllocProgressBar');
+      const warnEl = document.getElementById('ovAllocWarning');
+
+      pctBadge.textContent = `${sumAllocPct.toFixed(1)}%`;
+      document.getElementById('ovAllocatedKrwText').textContent = fmtKrw(sumAllocKrw);
+      document.getElementById('ovUnallocatedKrwText').textContent = fmtKrw(unallocKrw);
+
+      if (sumAllocPct > 100.01) {
+        pctBadge.className = 'px-2 py-0.5 rounded-md bg-rose-100 text-rose-700 font-extrabold tabular-nums';
+        progBar.className = 'h-full bg-rose-500 rounded-full transition-all duration-300';
+        progBar.style.width = '100%';
+        warnEl.classList.remove('hidden');
+      } else {
+        pctBadge.className = 'px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-extrabold tabular-nums';
+        progBar.className = 'h-full bg-emerald-500 rounded-full transition-all duration-300';
+        progBar.style.width = `${Math.max(0, Math.min(100, sumAllocPct))}%`;
+        warnEl.classList.add('hidden');
+      }
+
+      // 6대 종합 KPI 카드 업데이트
+      const totalEvalPct = sumCostUsd > 0 ? (sumUnrealizedUsd / sumCostUsd) * 100 : 0;
+      const signTotPct = totalEvalPct > 0 ? '+' : '';
+      const signTotPnl = sumUnrealizedUsd > 0 ? '+' : '';
+      const signTotReal = sumRealizedUsd > 0 ? '+' : '';
+
+      document.getElementById('ovKpiCostUsd').textContent = fmtUsd(sumCostUsd);
+      document.getElementById('ovKpiCostKrw').textContent = `약 ${fmtKrw(sumCostUsd * globalRate)}`;
+
+      const ovEvalEl = document.getElementById('ovKpiEvalUsd');
+      ovEvalEl.textContent = `${fmtUsd(sumEvalUsd)} (${signTotPct}${totalEvalPct.toFixed(2)}%)`;
+      ovEvalEl.className = `text-[15px] font-extrabold mt-1 tabular-nums no-wrap text-center ${sumUnrealizedUsd > 0 ? 'text-emerald-600' : sumUnrealizedUsd < 0 ? 'text-rose-600' : 'text-slate-800'}`;
+      document.getElementById('ovKpiEvalKrw').textContent = `약 ${fmtKrw(sumEvalUsd * globalRate)}`;
+
+      const ovUnrEl = document.getElementById('ovKpiUnrealizedUsd');
+      ovUnrEl.textContent = `${signTotPnl}${fmtUsd(sumUnrealizedUsd)}`;
+      ovUnrEl.className = `text-[15px] font-extrabold mt-1 tabular-nums no-wrap text-center ${sumUnrealizedUsd > 0 ? 'text-emerald-600' : sumUnrealizedUsd < 0 ? 'text-rose-600' : 'text-slate-800'}`;
+      document.getElementById('ovKpiUnrealizedKrw').textContent = `약 ${signTotPnl}${fmtKrw(sumUnrealizedUsd * globalRate)}`;
+
+      document.getElementById('ovKpiCashUsd').textContent = fmtUsd(sumCashUsd);
+      const totalRealizedPct = sumRealizedCostUsd > 0 ? (sumRealizedUsd / sumRealizedCostUsd) * 100 : 0;
+      const signTotRealPct = totalRealizedPct > 0 ? '+' : '';
+      const ovRealEl = document.getElementById('ovKpiRealizedUsd');
+      ovRealEl.textContent = `${signTotReal}${fmtUsd(sumRealizedUsd)} (${signTotRealPct}${totalRealizedPct.toFixed(2)}%)`;
+      ovRealEl.className = `text-[15px] font-extrabold mt-1 tabular-nums no-wrap text-center ${sumRealizedUsd > 0 ? 'text-emerald-600' : sumRealizedUsd < 0 ? 'text-rose-600' : 'text-slate-800'}`;
+      document.getElementById('ovKpiRealizedKrw').textContent = `약 ${signTotReal}${fmtKrw(sumRealizedUsd * globalRate)}`;
+
+      const totalCombinedPnL = sumUnrealizedUsd + sumRealizedUsd;
+      const totalCapYieldPct = sumAllocUsd > 0 ? (totalCombinedPnL / sumAllocUsd) * 100 : 0;
+      const signTotCapPct = totalCapYieldPct > 0 ? '+' : '';
+      const signTotComb = totalCombinedPnL > 0 ? '+' : '';
+      const ovCapYieldEl = document.getElementById('ovKpiCapYieldPct');
+      ovCapYieldEl.textContent = `${signTotCapPct}${totalCapYieldPct.toFixed(2)}%`;
+      ovCapYieldEl.className = `text-[15px] font-extrabold mt-1 tabular-nums no-wrap text-center ${totalCombinedPnL > 0 ? 'text-emerald-600' : totalCombinedPnL < 0 ? 'text-rose-600' : 'text-slate-800'}`;
+      document.getElementById('ovKpiCapYieldSub').textContent = `총손익 ${signTotComb}${fmtUsd(totalCombinedPnL)}`;
+    }
+
     function renderAll() {
-      const cfg = state.config;
-      const p = computePortfolio();
+      renderTopNavTabs();
+      updateApiBadge();
+
+      const overviewEl = document.getElementById('overviewView');
+      const detailEl = document.getElementById('tickerDetailView');
+
+      if (state.activeTab === 'OVERVIEW') {
+        overviewEl.classList.remove('hidden');
+        detailEl.classList.add('hidden');
+        renderOverviewView();
+        return;
+      }
+
+      overviewEl.classList.add('hidden');
+      detailEl.classList.remove('hidden');
+
+      const tickerObj = getActiveTickerObj();
+      const cfg = tickerObj.config;
+      const p = computePortfolioForTicker(tickerObj);
 
       // 1. 기초 설정 입력값 동기화
       document.getElementById('cfgTicker').value = cfg.ticker;
+      document.getElementById('cfgAllocPct').value = Number(cfg.allocPct) || 0;
       document.getElementById('cfgKrw').value = Math.round(Number(cfg.krwCapital) || 0).toLocaleString('ko-KR');
       document.getElementById('cfgRate').value = formatDecimalNumber(cfg.exchangeRate, 2);
       document.getElementById('cfgUsd').value = Number(cfg.usdCapital).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -838,22 +1342,22 @@
       }
       document.getElementById('targetQtyDisplay').textContent = cfg.targetQty + '주';
 
-      // KPI 5개 업데이트
+      // KPI 6개 업데이트
       document.getElementById('kpiQty').textContent = `${p.totalQty.toLocaleString()} 주`;
       document.getElementById('kpiQtySub').textContent = `매수원금 ${fmtUsd(p.totalCost)}`;
 
       document.getElementById('kpiAvg').textContent = fmtUsd(p.avgPrice);
       document.getElementById('kpiAvgSub').textContent = `원화 약 ${fmtKrw(p.avgPrice * cfg.exchangeRate)}`;
 
-      const curPrice = Number(cfg.currentPrice) || 0;
-      const evalValue = curPrice * p.totalQty;
-      const evalPnL = p.totalQty > 0 ? (curPrice - p.avgPrice) * p.totalQty : 0;
-      const evalPct = p.avgPrice > 0 && p.totalQty > 0 ? ((curPrice - p.avgPrice) / p.avgPrice) * 100 : 0;
+      const curPrice = p.curPrice;
+      const evalValue = p.evalValue;
+      const evalPnL = p.evalPnL;
+      const evalPct = p.evalPct;
       const evalEl = document.getElementById('kpiEval');
       const signPct = evalPct > 0 ? '+' : '';
       const signUsd = evalPnL > 0 ? '+' : '';
       evalEl.textContent = `${fmtUsd(curPrice)} (${signPct}${evalPct.toFixed(2)}%)`;
-      evalEl.className = `text-[15px] font-extrabold mt-1 tabular-nums no-wrap text-right ${evalPnL > 0 ? 'text-emerald-600' : evalPnL < 0 ? 'text-rose-600' : 'text-slate-800'}`;
+      evalEl.className = `text-[15px] font-extrabold mt-1 tabular-nums no-wrap text-center ${evalPnL > 0 ? 'text-emerald-600' : evalPnL < 0 ? 'text-rose-600' : 'text-slate-800'}`;
       document.getElementById('kpiEvalSub').textContent = `손익 ${signUsd}${fmtUsd(evalPnL)} · 평가 ${fmtUsd(evalValue)}`;
 
       const estUnitCost = p.avgPrice > 0 ? p.avgPrice * cfg.targetQty : (cfg.usdCapital / cfg.splits);
@@ -863,22 +1367,30 @@
 
       const realEl = document.getElementById('kpiRealized');
       const rSign = p.realizedPnL > 0 ? '+' : '';
-      realEl.textContent = `${rSign}${fmtUsd(p.realizedPnL)}`;
-      realEl.className = `text-[15px] font-extrabold mt-1 tabular-nums no-wrap text-right ${p.realizedPnL > 0 ? 'text-emerald-600' : p.realizedPnL < 0 ? 'text-rose-600' : 'text-slate-800'}`;
+      const rPctSign = p.realizedPct > 0 ? '+' : '';
+      realEl.textContent = `${rSign}${fmtUsd(p.realizedPnL)} (${rPctSign}${p.realizedPct.toFixed(2)}%)`;
+      realEl.className = `text-[15px] font-extrabold mt-1 tabular-nums no-wrap text-center ${p.realizedPnL > 0 ? 'text-emerald-600' : p.realizedPnL < 0 ? 'text-rose-600' : 'text-slate-800'}`;
+      document.getElementById('kpiRealizedSub').textContent = `원화 약 ${rSign}${fmtKrw(p.realizedPnL * cfg.exchangeRate)}`;
+
+      const totalPnL = evalPnL + p.realizedPnL;
+      const capYieldPct = cfg.usdCapital > 0 ? (totalPnL / cfg.usdCapital) * 100 : 0;
+      const cySign = capYieldPct > 0 ? '+' : '';
+      const tpSign = totalPnL > 0 ? '+' : '';
+      const capYieldEl = document.getElementById('kpiCapitalYieldPct');
+      capYieldEl.textContent = `${cySign}${capYieldPct.toFixed(2)}%`;
+      capYieldEl.className = `text-[15px] font-extrabold mt-1 tabular-nums no-wrap text-center ${totalPnL > 0 ? 'text-emerald-600' : totalPnL < 0 ? 'text-rose-600' : 'text-slate-800'}`;
+      document.getElementById('kpiCapitalYieldSub').textContent = `총손익 ${tpSign}${fmtUsd(totalPnL)}`;
 
       // 주문표 렌더링
-      renderOrderCards(p);
+      renderOrderCards(tickerObj, p);
 
       // 매매일지 렌더링
       renderTable(p.rows);
-
-      // API 상태 배지 업데이트
-      updateApiBadge();
     }
 
-    function renderOrderCards(p) {
-      const cfg = state.config;
-      const calc = calculateOrdersData(p);
+    function renderOrderCards(tickerObj, p) {
+      const cfg = tickerObj.config;
+      const calc = calculateOrdersData(tickerObj, p);
       const v1 = calc.v1;
       const v4 = calc.v4;
 
@@ -1062,55 +1574,121 @@
       }).join('');
     }
 
+    // 종합 투자현황 원금 및 환율 수정
+    function updateTotalCapitalFromOverview() {
+      const rawKrw = String(document.getElementById('ovTotalKrwInput').value).replace(/[^\d]/g, '');
+      const newTotalKrw = Math.max(0, parseFloat(rawKrw) || 0);
+      state.totalKrwCapital = newTotalKrw;
+
+      // 모든 종목의 투자운영금(원)과 달러원금($)을 각 비중(%)에 맞춰 동기화
+      state.tickers.forEach(tObj => {
+        const pct = Number(tObj.config.allocPct) || 0;
+        const rate = Number(tObj.config.exchangeRate) || state.globalExchangeRate || 1336;
+        const krw = Math.round(newTotalKrw * (pct / 100));
+        tObj.config.krwCapital = krw;
+        tObj.config.usdCapital = rate > 0 ? Number((krw / rate).toFixed(2)) : 0;
+      });
+
+      saveState();
+      renderAll();
+      showToast(`총 투자원금 ${fmtKrw(newTotalKrw)} 및 전 종목 배정금액이 반영되었습니다.`);
+    }
+
+    function updateGlobalRateFromOverview() {
+      const rawRate = String(document.getElementById('ovExchangeRateInput').value).replace(/,/g, '');
+      const newRate = parseFloat(rawRate) || 1336;
+      state.globalExchangeRate = newRate;
+
+      state.tickers.forEach(tObj => {
+        tObj.config.exchangeRate = newRate;
+        tObj.config.usdCapital = newRate > 0 ? Number((tObj.config.krwCapital / newRate).toFixed(2)) : 0;
+      });
+
+      saveState();
+      renderAll();
+      showToast(`기준 환율 ${newRate.toLocaleString('ko-KR')}원/$ 반영 완료`);
+    }
+
+    // 비중재계산 버튼: 총 투자원금 × 현재 종목 투자 비중(%)
+    function recalcCapitalFromAllocation(notify = false) {
+      const tickerObj = getActiveTickerObj();
+      const cfg = tickerObj.config;
+      const pct = Math.max(0, Math.min(100, parseFloat(document.getElementById('cfgAllocPct').value) || 0));
+      const rate = Number(cfg.exchangeRate) || state.globalExchangeRate || 1336;
+      const krw = Math.round((Number(state.totalKrwCapital) || 0) * (pct / 100));
+      const usd = rate > 0 ? Number((krw / rate).toFixed(2)) : 0;
+
+      cfg.allocPct = pct;
+      cfg.krwCapital = krw;
+      cfg.usdCapital = usd;
+
+      saveState();
+      renderAll();
+      if (notify) {
+        showToast(`${cfg.ticker} 비중 ${pct}% → 투자운영금 ${fmtKrw(krw)} (${fmtUsd(usd)}) 반영`);
+      }
+    }
+
     // 기초 운용 설정 인라인 수정 핸들러
     function updateBasicConfig(changedField) {
-      const ticker = document.getElementById('cfgTicker').value.trim().toUpperCase() || 'SOXL';
-      const rawKrw = String(document.getElementById('cfgKrw').value).replace(/[^\d]/g, '');
+      const tickerObj = getActiveTickerObj();
+      const cfg = tickerObj.config;
+
+      const ticker = document.getElementById('cfgTicker').value.trim().toUpperCase() || cfg.ticker || 'SOXL';
+      const allocPct = Math.max(0, Math.min(100, parseFloat(document.getElementById('cfgAllocPct').value) || 0));
       const rawRate = String(document.getElementById('cfgRate').value).replace(/,/g, '');
       const rawUsd = String(document.getElementById('cfgUsd').value).replace(/,/g, '');
-      let krw = parseFloat(rawKrw) || 0;
+      let krw = Number(cfg.krwCapital) || 0;
       let rate = parseFloat(rawRate) || 1336;
       let usd = parseFloat(rawUsd) || 0;
       const splits = Math.max(10, parseInt(document.getElementById('cfgSplits').value, 10) || 40);
 
-      if (changedField === 'krw' || changedField === 'rate') {
+      if (changedField === 'allocPct') {
+        krw = Math.round((Number(state.totalKrwCapital) || 0) * (allocPct / 100));
+        usd = rate > 0 ? Number((krw / rate).toFixed(2)) : 0;
+      } else if (changedField === 'rate') {
         usd = rate > 0 ? Number((krw / rate).toFixed(2)) : 0;
       } else if (changedField === 'usd') {
-        krw = Math.round(usd * rate);
+        // 투자운영금(원)은 총 투자원금 × 투자 비중으로 고정 유지
+        usd = Math.max(0, Number(usd.toFixed(2)));
       }
 
-      state.config.ticker = ticker;
-      state.config.krwCapital = krw;
-      state.config.exchangeRate = rate;
-      state.config.usdCapital = usd;
-      state.config.splits = splits;
+      cfg.ticker = ticker;
+      cfg.allocPct = allocPct;
+      cfg.krwCapital = krw;
+      cfg.exchangeRate = rate;
+      cfg.usdCapital = usd;
+      cfg.splits = splits;
       saveState();
       renderAll();
 
       if (changedField === 'ticker' && state.api.provider !== 'none' && state.api.key) {
-        fetchLivePrice(false);
+        fetchLivePriceForTicker(tickerObj, false);
       }
     }
 
     function setOrderMode(mode) {
-      state.config.orderMode = mode;
+      const tickerObj = getActiveTickerObj();
+      tickerObj.config.orderMode = mode;
       saveState();
       renderAll();
     }
 
     function changeTargetQty(delta) {
-      state.config.targetQty = Math.max(1, (Number(state.config.targetQty) || 4) + delta);
+      const tickerObj = getActiveTickerObj();
+      tickerObj.config.targetQty = Math.max(1, (Number(tickerObj.config.targetQty) || 4) + delta);
       saveState();
       renderAll();
       updateTxPreview();
     }
 
     function applyCurrentPrice() {
+      const tickerObj = getActiveTickerObj();
       const inputEl = document.getElementById('currentPriceInput');
       const raw = String(inputEl.value).replace(/,/g, '').trim();
 
       if (!raw) {
-        fetchLivePrice(true);
+        fetchLivePriceForTicker(tickerObj, true);
         return;
       }
 
@@ -1120,10 +1698,106 @@
         return;
       }
 
-      state.config.currentPrice = Number(num.toFixed(2));
+      tickerObj.config.currentPrice = Number(num.toFixed(2));
       saveState();
       renderAll();
-      showToast(`${state.config.ticker} 현재가 ${fmtUsd(state.config.currentPrice)} 반영 완료`);
+      showToast(`${tickerObj.config.ticker} 현재가 ${fmtUsd(tickerObj.config.currentPrice)} 반영 완료`);
+    }
+
+    // 종목 추가 모달 제어
+    function openAddTickerModal() {
+      document.getElementById('newTickerSymbol').value = '';
+      const usedPct = state.tickers.reduce((acc, t) => acc + (Number(t.config.allocPct) || 0), 0);
+      const remainPct = Math.max(0, Math.min(100, Number((100 - usedPct).toFixed(1))));
+      document.getElementById('newTickerAllocPct').value = remainPct > 0 ? remainPct : 20;
+      document.getElementById('newTickerSplits').value = 40;
+      document.getElementById('newTickerTargetQty').value = 4;
+      previewNewTickerCapital();
+
+      const modal = document.getElementById('addTickerModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      setTimeout(() => document.getElementById('newTickerSymbol').focus(), 60);
+    }
+
+    function closeAddTickerModal() {
+      const modal = document.getElementById('addTickerModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function previewNewTickerCapital() {
+      const pct = Math.max(0, Math.min(100, parseFloat(document.getElementById('newTickerAllocPct').value) || 0));
+      const totalKrw = Number(state.totalKrwCapital) || 0;
+      const krw = Math.round(totalKrw * (pct / 100));
+      document.getElementById('newTickerKrw').value = krw.toLocaleString('ko-KR');
+      document.getElementById('newTickerHelperText').textContent =
+        `현재 총 투자원금 ${fmtKrw(totalKrw)} 기준 ${pct}% = ${fmtKrw(krw)} 자동 배정`;
+    }
+
+    async function confirmAddTicker() {
+      const symbol = document.getElementById('newTickerSymbol').value.trim().toUpperCase();
+      if (!symbol) {
+        showToast('추가할 종목 티커(예: TQQQ)를 입력해 주세요.');
+        return;
+      }
+      if (state.tickers.some(t => t.config.ticker === symbol)) {
+        showToast(`${symbol} 종목은 이미 등록되어 있습니다.`);
+        return;
+      }
+
+      const allocPct = Math.max(0, Math.min(100, parseFloat(document.getElementById('newTickerAllocPct').value) || 0));
+      const splits = Math.max(10, parseInt(document.getElementById('newTickerSplits').value, 10) || 40);
+      const targetQty = Math.max(1, parseInt(document.getElementById('newTickerTargetQty').value, 10) || 4);
+      const rate = Number(state.globalExchangeRate) || 1336;
+      const krw = Math.round((Number(state.totalKrwCapital) || 0) * (allocPct / 100));
+      const usd = rate > 0 ? Number((krw / rate).toFixed(2)) : 0;
+
+      const newId = 'ticker_' + symbol.toLowerCase() + '_' + Date.now();
+      const newTickerObj = {
+        id: newId,
+        config: {
+          ticker: symbol,
+          allocPct,
+          krwCapital: krw,
+          exchangeRate: rate,
+          usdCapital: usd,
+          splits,
+          orderMode: 'fixed',
+          targetQty,
+          currentPrice: 0
+        },
+        transactions: []
+      };
+
+      state.tickers.push(newTickerObj);
+      state.activeTab = newId;
+      saveState();
+      closeAddTickerModal();
+      renderAll();
+      showToast(`${symbol} 종목(비중 ${allocPct}%)이 추가되었습니다.`);
+
+      if (state.api.provider !== 'none' && state.api.key) {
+        await fetchLivePriceForTicker(newTickerObj, true);
+      }
+    }
+
+    function deleteTickerTab(tickerId) {
+      if (state.tickers.length <= 1) {
+        showToast('최소 1개 이상의 종목이 필요합니다.');
+        return;
+      }
+      const idx = state.tickers.findIndex(t => t.id === tickerId);
+      if (idx === -1) return;
+      const removedName = state.tickers[idx].config.ticker;
+      state.tickers.splice(idx, 1);
+
+      if (state.activeTab === tickerId) {
+        state.activeTab = state.tickers[Math.max(0, idx - 1)].id;
+      }
+      saveState();
+      renderAll();
+      showToast(`${removedName} 종목 탭이 삭제되었습니다.`);
     }
 
     // 일일 체결 폼 제어
@@ -1135,6 +1809,7 @@
     }
 
     function updateTxPreview() {
+      const tickerObj = getActiveTickerObj();
       const type = document.getElementById('txType').value;
       const price = parseFloat(document.getElementById('txPrice').value) || 0;
       const qty = parseInt(document.getElementById('txQty').value, 10) || 0;
@@ -1144,7 +1819,7 @@
 
       let tText = 'T +0.00';
       if (type === 'BUY') {
-        const delta = tMode === 'CUSTOM' ? customT : (qty / Math.max(1, state.config.targetQty));
+        const delta = tMode === 'CUSTOM' ? customT : (qty / Math.max(1, tickerObj.config.targetQty));
         tText = `T ${delta >= 0 ? '+' : ''}${delta.toFixed(2)}`;
       } else if (type === 'SELL_PART') {
         tText = tMode === 'CUSTOM' ? `T ${customT >= 0 ? '+' : ''}${customT.toFixed(2)}` : 'T × 0.75 (쿼터)';
@@ -1159,6 +1834,7 @@
     }
 
     function addTransaction() {
+      const tickerObj = getActiveTickerObj();
       const date = document.getElementById('txDate').value || new Date().toISOString().slice(0, 10);
       const type = document.getElementById('txType').value;
       const price = parseFloat(document.getElementById('txPrice').value);
@@ -1176,7 +1852,7 @@
         return;
       }
 
-      state.transactions.push({
+      tickerObj.transactions.push({
         id: 'tx_' + Date.now(),
         date,
         type,
@@ -1187,7 +1863,7 @@
         memo
       });
 
-      state.config.currentPrice = price;
+      tickerObj.config.currentPrice = price;
 
       saveState();
       renderAll();
@@ -1196,27 +1872,40 @@
       document.getElementById('txQty').value = '';
       document.getElementById('txMemo').value = '';
       updateTxPreview();
-      showToast('체결 내역이 반영되었습니다.');
+      showToast(`${tickerObj.config.ticker} 체결 내역이 반영되었습니다.`);
     }
 
     function deleteTransaction(id) {
-      state.transactions = state.transactions.filter(t => t.id !== id);
+      const tickerObj = getActiveTickerObj();
+      tickerObj.transactions = tickerObj.transactions.filter(t => t.id !== id);
       saveState();
       renderAll();
       showToast('체결 기록이 삭제되었습니다.');
     }
 
-    function resetToDefault() {
-      state = JSON.parse(JSON.stringify(DEFAULT_STATE));
-      saveState();
-      renderAll();
-      showToast('초기 SOXL 4주 세팅으로 복원되었습니다.');
+    function resetCurrentTickerToDefault() {
+      const tickerObj = getActiveTickerObj();
+      if (tickerObj.id === 'ticker_soxl_default') {
+        const def = createDefaultSoxlTicker();
+        tickerObj.config = def.config;
+        tickerObj.transactions = def.transactions;
+        state.totalKrwCapital = 10000000;
+        saveState();
+        renderAll();
+        showToast('SOXL 초기 4주 세팅으로 복원되었습니다.');
+      } else {
+        tickerObj.transactions = [];
+        saveState();
+        renderAll();
+        showToast(`${tickerObj.config.ticker} 매매 일지가 초기화되었습니다.`);
+      }
     }
 
     function copyOrders(ver) {
-      const p = computePortfolio();
-      const cfg = state.config;
-      const calc = calculateOrdersData(p);
+      const tickerObj = getActiveTickerObj();
+      const p = computePortfolioForTicker(tickerObj);
+      const cfg = tickerObj.config;
+      const calc = calculateOrdersData(tickerObj, p);
       let text = '';
 
       if (ver === 'v1') {
@@ -1266,10 +1955,11 @@
 
     // 메모 전체보기 모달
     function openMemoModal(id) {
-      const tx = state.transactions.find(t => t.id === id);
+      const tickerObj = getActiveTickerObj();
+      const tx = tickerObj.transactions.find(t => t.id === id);
       if (!tx) return;
       editingMemoTxId = id;
-      document.getElementById('memoTxMeta').textContent = `${tx.date} | ${tx.type === 'BUY' ? '매수' : '매도'} ${tx.qty}주 @ ${fmtUsd(tx.price)}`;
+      document.getElementById('memoTxMeta').textContent = `[${tickerObj.config.ticker}] ${tx.date} | ${tx.type === 'BUY' ? '매수' : '매도'} ${tx.qty}주 @ ${fmtUsd(tx.price)}`;
       document.getElementById('memoModalTextarea').value = tx.memo || '';
       const modal = document.getElementById('memoModal');
       modal.classList.remove('hidden');
@@ -1285,7 +1975,8 @@
 
     function saveMemoEdit() {
       if (!editingMemoTxId) return;
-      const tx = state.transactions.find(t => t.id === editingMemoTxId);
+      const tickerObj = getActiveTickerObj();
+      const tx = tickerObj.transactions.find(t => t.id === editingMemoTxId);
       if (tx) {
         tx.memo = document.getElementById('memoModalTextarea').value.trim();
         saveState();
@@ -1392,8 +2083,11 @@
         if (data && data.price && !isNaN(parseFloat(data.price))) {
           const liveRate = Number(parseFloat(data.price).toFixed(2));
           if (liveRate > 0) {
-            state.config.exchangeRate = liveRate;
-            state.config.usdCapital = Number((state.config.krwCapital / liveRate).toFixed(2));
+            state.globalExchangeRate = liveRate;
+            state.tickers.forEach(tObj => {
+              tObj.config.exchangeRate = liveRate;
+              tObj.config.usdCapital = Number((tObj.config.krwCapital / liveRate).toFixed(2));
+            });
             saveState();
             renderAll();
             if (notify) showToast(`실시간 환율 ${liveRate.toLocaleString('ko-KR')}원/$ 반영 완료`);
@@ -1405,6 +2099,7 @@
     }
 
     async function testApiConnection() {
+      const tickerObj = getActiveTickerObj();
       const resBox = document.getElementById('apiTestResult');
       if (selectedModalProvider === 'none') {
         resBox.className = 'rounded-xl p-3 text-xs font-semibold bg-slate-100 text-slate-700';
@@ -1421,13 +2116,13 @@
       }
 
       resBox.className = 'rounded-xl p-3 text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200';
-      resBox.textContent = `${state.config.ticker} 시세 연결 테스트 중...`;
+      resBox.textContent = `${tickerObj.config.ticker} 시세 연결 테스트 중...`;
       resBox.classList.remove('hidden');
 
       try {
-        const price = await queryTickerPrice(selectedModalProvider, key, state.config.ticker);
+        const price = await queryTickerPrice(selectedModalProvider, key, tickerObj.config.ticker);
         resBox.className = 'rounded-xl p-3 text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200';
-        resBox.textContent = `연결 성공! ${state.config.ticker} 현재가: ${fmtUsd(price)}`;
+        resBox.textContent = `연결 성공! ${tickerObj.config.ticker} 현재가: ${fmtUsd(price)}`;
       } catch (err) {
         resBox.className = 'rounded-xl p-3 text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200';
         resBox.textContent = `연결 실패: ${err.message}`;
@@ -1442,8 +2137,7 @@
       closeApiModal();
       updateApiBadge();
       if (state.api.provider !== 'none' && state.api.key) {
-        fetchLivePrice(true);
-        fetchLiveExchangeRate(false);
+        refreshAllTickersLive();
       } else {
         showToast('시세 API 설정이 저장되었습니다.');
       }
@@ -1464,20 +2158,33 @@
       }
     }
 
-    async function fetchLivePrice(notify = false) {
+    async function fetchLivePriceForTicker(tickerObj, notify = false) {
       if (state.api.provider === 'none' || !state.api.key) {
         if (notify) openApiModal();
         return;
       }
       try {
-        const price = await queryTickerPrice(state.api.provider, state.api.key, state.config.ticker);
-        state.config.currentPrice = price;
+        const price = await queryTickerPrice(state.api.provider, state.api.key, tickerObj.config.ticker);
+        tickerObj.config.currentPrice = Number(price.toFixed(2));
         saveState();
         renderAll();
-        if (notify) showToast(`${state.config.ticker} 현재가 ${fmtUsd(price)} 반영 완료`);
+        if (notify) showToast(`${tickerObj.config.ticker} 현재가 ${fmtUsd(tickerObj.config.currentPrice)} 반영 완료`);
       } catch (e) {
-        if (notify) showToast(`시세 조회 실패: ${e.message}`);
+        if (notify) showToast(`${tickerObj.config.ticker} 시세 조회 실패: ${e.message}`);
       }
+    }
+
+    async function refreshAllTickersLive() {
+      if (state.api.provider === 'none' || !state.api.key) {
+        openApiModal();
+        return;
+      }
+      showToast('전 종목 실시간 시세 및 환율 조회 중...');
+      await fetchLiveExchangeRate(false);
+      for (const tObj of state.tickers) {
+        await fetchLivePriceForTicker(tObj, false);
+      }
+      showToast('전 종목 시세 · 환율 업데이트 완료');
     }
 
     // 초기화 실행
@@ -1486,7 +2193,9 @@
       renderAll();
       updateTxPreview();
       if (state.api.provider !== 'none' && state.api.key) {
-        fetchLivePrice(false);
+        for (const tObj of state.tickers) {
+          fetchLivePriceForTicker(tObj, false);
+        }
       }
       fetchLiveExchangeRate(false);
     })();
