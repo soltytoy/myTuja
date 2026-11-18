@@ -107,7 +107,17 @@
       color: #475569;
       cursor: not-allowed;
     }
-
+    
+    /* 기초 운용 설정 7개 박스 1행 고정 (좁은 화면 가로 스크롤) */
+    .config-scroll {
+      display: grid;
+      grid-template-columns: minmax(90px, 1fr) minmax(128px, 1.3fr) minmax(114px, 1.2fr) minmax(94px, 1fr) minmax(106px, 1.1fr) minmax(84px, 0.9fr) minmax(146px, 1.5fr);
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      -webkit-overflow-scrolling: touch;
+    }
+    
     /* 상단 6대 KPI 1행 고정 (좁은 화면 가로 스크롤) */
     .kpi-scroll {
       display: grid;
@@ -371,7 +381,7 @@
         </div>
 
         <!-- 7개 핵심 파라미터 1행 배치 (투자 비중 % + 투자운영금 읽기전용) -->
-        <div class="grid grid-cols-7 gap-2 overflow-x-auto pb-1">
+        <div class="config-scroll">
           <div class="form-field min-w-[88px]">
             <label for="cfgTicker" class="text-[11px] font-bold text-slate-500 mb-1 no-wrap text-center">종목 (Ticker)</label>
             <input id="cfgTicker" type="text" maxlength="12" class="form-control uppercase font-extrabold text-blue-700 px-2 text-xs sm:text-sm text-center" value="SOXL" onchange="updateBasicConfig('ticker')" />
