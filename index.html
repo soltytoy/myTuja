@@ -1220,6 +1220,7 @@
         const amount = price * qty;
         const avgBefore = totalQty > 0 ? totalCost / totalQty : 0;
         let tDelta = 0;
+        let rowPnL = 0;
 
         if (tx.type === 'BUY') {
           totalCost += amount;
@@ -1238,6 +1239,7 @@
           const sellQty = Math.min(totalQty, qty);
           const soldCost = avgBefore * sellQty;
           const pnl = (price - avgBefore) * sellQty;
+          rowPnL = pnl;
           realizedPnL += pnl;
           totalSoldCost += soldCost;
           totalCost = Math.max(0, totalCost - soldCost);
@@ -1253,6 +1255,7 @@
           const sellQty = totalQty > 0 ? totalQty : qty;
           const soldCost = avgBefore * sellQty;
           const pnl = (price - avgBefore) * sellQty;
+          rowPnL = pnl;
           realizedPnL += pnl;
           totalSoldCost += soldCost;
           totalCost = 0;
@@ -1272,6 +1275,7 @@
           avgAfter,
           tAfter: tValue,
           cashAfter: cash,
+          rowPnL,
           realizedAfter: realizedPnL
         };
       });
@@ -1776,8 +1780,11 @@
         if (r.type === 'SELL_ALL') badge = `<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-bold no-wrap">전량익절</span>`;
 
         const memoText = r.memo && r.memo.trim() ? r.memo.trim() : '-';
-        const rSign = r.realizedAfter > 0 ? '+' : '';
-        const rColor = r.realizedAfter > 0 ? 'text-emerald-600' : r.realizedAfter < 0 ? 'text-rose-600' : 'text-slate-500';
+        const isSell = r.type === 'SELL_PART' || r.type === 'SELL_ALL';
+        const rVal = isSell ? (Number(r.rowPnL) || 0) : 0;
+        const rSign = rVal > 0 ? '+' : '';
+        const rColor = !isSell ? 'text-slate-400' : rVal > 0 ? 'text-emerald-600' : rVal < 0 ? 'text-rose-600' : 'text-slate-500';
+        const rDisplay = isSell ? `${rSign}${fmtUsd(rVal)}` : '-';
 
         return `
           <tr class="hover:bg-slate-50/80 transition">
@@ -1792,7 +1799,7 @@
             <td class="py-2.5 px-3 text-right font-bold text-blue-600 no-wrap">${fmtUsd(r.avgAfter)}</td>
             <td class="py-2.5 px-3 text-center font-bold text-indigo-600 no-wrap">${r.tAfter.toFixed(2)}</td>
             <td class="py-2.5 px-3 text-right font-medium text-slate-700 no-wrap">${fmtUsd(r.cashAfter)}</td>
-            <td class="py-2.5 px-3 text-right font-bold ${rColor} no-wrap">${rSign}${fmtUsd(r.realizedAfter)}</td>
+            <td class="py-2.5 px-3 text-right font-bold ${rColor} no-wrap">${rDisplay}</td>
             <td class="py-2.5 px-3 text-left" style="max-width:175px; width:175px;">
               <button type="button" onclick="openMemoModal('${r.id}')" title="클릭하여 메모 전체보기" class="w-full text-left truncate text-slate-600 hover:text-blue-600 hover:underline block cursor-pointer">
                 ${escapeHtml(memoText)}
