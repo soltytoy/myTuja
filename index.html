@@ -107,6 +107,38 @@
       color: #475569;
       cursor: not-allowed;
     }
+
+    /* 테이블 내 인라인 날짜 수정 입력창 */
+    .table-date-input {
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      padding: 2px 4px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #334155;
+      font-family: inherit;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.15s ease, background-color 0.15s ease;
+    }
+
+    .table-date-input:hover {
+      background-color: #ffffff;
+      border-color: #cbd5e1;
+    }
+
+    .table-date-input:focus {
+      background-color: #ffffff;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+    }
+
+    .table-date-input::-webkit-calendar-picker-indicator {
+      cursor: pointer;
+      opacity: 0.65;
+      margin-left: 2px;
+    }
     
     /* 기초 운용 설정 7개 박스 1행 고정 (좁은 화면 가로 스크롤) */
     .config-scroll {
@@ -572,7 +604,7 @@
         </div>
       </section>
 
-      <!-- 5. 누적 매매 일지 테이블 (사이클 드롭다운 필터 포함) -->
+      <!-- 5. 누적 매매 일지 테이블 (사이클 드롭다운 필터 + 날짜 인라인 수정 포함) -->
       <section aria-label="누적 매매 일지" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         <div class="px-4 py-3.5 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
           <div class="flex items-center gap-2">
@@ -598,7 +630,7 @@
           <table id="journalTable" class="w-full text-xs border-collapse">
             <thead>
               <tr class="bg-slate-50 text-slate-600 border-b border-slate-200">
-                <th class="py-3 px-3 font-extrabold text-center no-wrap" style="min-width:162px; width:162px;">사이클 · No / 날짜</th>
+                <th class="py-3 px-3 font-extrabold text-center no-wrap" style="min-width:190px; width:190px;">사이클 · No / 날짜</th>
                 <th class="py-3 px-3 font-extrabold text-center no-wrap">구분</th>
                 <th class="py-3 px-3 font-extrabold text-center no-wrap">체결가</th>
                 <th class="py-3 px-3 font-extrabold text-center no-wrap">수량</th>
@@ -1870,12 +1902,16 @@
         const rDisplay = isSell ? `${rSign}${fmtUsd(rVal)}` : '-';
 
         const rowNo = selectedCycleFilter === 'ALL' ? r.index : r.cycleIndex;
-        const cycleBadge = `<span class="px-1.5 py-0.2 rounded bg-indigo-50 text-indigo-700 font-extrabold text-[10px] mr-1">C${r.cycle}</span>`;
+        const cycleBadge = `<span class="px-1.5 py-0.2 rounded bg-indigo-50 text-indigo-700 font-extrabold text-[10px]">C${r.cycle}</span>`;
 
         return `
           <tr class="hover:bg-slate-50/80 transition">
-            <td class="py-2.5 px-3 text-center font-medium text-slate-700 no-wrap" style="min-width:162px; width:162px;">
-              ${cycleBadge}<span class="text-slate-400 font-bold mr-1">#${rowNo}</span>${r.date}
+            <td class="py-2 px-3 text-center font-medium text-slate-700 no-wrap" style="min-width:190px; width:190px;">
+              <div class="inline-flex items-center justify-center gap-1">
+                ${cycleBadge}
+                <span class="text-slate-400 font-bold">#${rowNo}</span>
+                <input type="date" value="${escapeHtml(r.date)}" aria-label="거래일자 수정" title="클릭하여 거래일자 수정" onchange="updateTransactionDate('${r.id}', this.value)" class="table-date-input tabular-nums" />
+              </div>
             </td>
             <td class="py-2.5 px-3 text-center no-wrap">${badge}</td>
             <td class="py-2.5 px-3 text-right font-semibold text-slate-800 no-wrap">${fmtUsd(r.price)}</td>
@@ -1897,6 +1933,23 @@
           </tr>
         `;
       }).join('');
+    }
+
+    function updateTransactionDate(txId, newDate) {
+      const tickerObj = getActiveTickerObj();
+      if (!tickerObj) return;
+      if (!newDate) {
+        renderAll();
+        showToast('올바른 날짜를 선택해 주세요.');
+        return;
+      }
+      const tx = tickerObj.transactions.find(t => t.id === txId);
+      if (!tx || tx.date === newDate) return;
+
+      tx.date = newDate;
+      saveState();
+      renderAll();
+      showToast(`거래일자가 ${newDate}(으)로 수정되었습니다.`);
     }
 
     function switchView(viewId) {
@@ -2492,6 +2545,7 @@
     Object.assign(window, {
       switchView,
       changeCycleFilter,
+      updateTransactionDate,
       updateTotalPortfolioKrw,
       updateGlobalExchangeRate,
       applyAllocationToTicker,
