@@ -511,17 +511,14 @@
         </div>
       </section>
 
-      <!-- 3. 라오어 1.0(조건 충족 시 변형 1.0 제안) vs 4.0 듀얼 다음 날 주문 계산기 -->
+      <!-- 3. 라오어 1.0(조건 충족 시 변형 1.0 활성화 / 미충족 시 비활성화) vs 4.0 듀얼 다음 날 주문 계산기 -->
       <section aria-label="다음 날 주문 계산기" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
           <div id="v1CardHeader" class="bg-slate-800 text-white px-4 py-3.5 flex items-center justify-between gap-2 transition-colors">
             <div>
               <div class="flex items-center flex-wrap gap-1.5">
-                <!-- 기본 Ver 1.0 고정 배지 (조건 미충족 시) -->
-                <span id="v1SingleBadge" class="px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-indigo-500 text-white">Ver 1.0</span>
-
-                <!-- Ver 1.0 / 변형 Ver 1.0 선택 스위처 (평단 < 전일종가×1.25 < 평단×1.12 충족 시에만 표시) -->
-                <div id="v1VariantSwitcher" class="hidden inline-flex rounded-lg bg-slate-950/60 p-0.5 border border-white/15 text-[11px]">
+                <!-- Ver 1.0 / 변형 Ver 1.0 선택 스위처 (항상 표시 · 조건 미충족 시 변형 탭 비활성화) -->
+                <div id="v1VariantSwitcher" class="inline-flex rounded-lg bg-slate-950/60 p-0.5 border border-white/15 text-[11px]">
                   <button type="button" id="v1StdBtn" onclick="setV1Variant('standard')" class="px-2 py-0.5 rounded-md font-extrabold bg-indigo-500 text-white shadow-xs transition no-wrap cursor-pointer">
                     Ver 1.0
                   </button>
@@ -530,7 +527,7 @@
                   </button>
                 </div>
 
-                <h3 id="v1CardTitle" class="font-bold text-sm">고정 분할 · 지정가 익절 전략</h3>
+                <h3 id="v1CardTitle" class="font-bold text-sm">고정 분할 · 지정가 익절 (제안 불가)</h3>
               </div>
               <p id="v1Subtitle" class="text-[11px] text-slate-300 mt-1 tabular-nums">1회기준 $0.00 · 금액진행 0.00회차</p>
             </div>
@@ -1426,7 +1423,7 @@
       const stdSell10 = Number((baseAvg * 1.10).toFixed(2));
       const stdSell12 = Number((baseAvg * 1.12).toFixed(2));
 
-      // 변형 Ver 1.0 제안 조건: 보유수량 > 0 이고, 평단 < 전일종가 × 1.25 < 평단 × 1.12 일 때만 제안
+      // 변형 Ver 1.0 제안 조건: 보유수량 > 0 이고, 평단 < 전일종가 × 1.25 < 평단 × 1.12 일 때만 활성화
       const prevSurgePrice = Number((prevClose * 1.25).toFixed(2));
       const canSuggestModV1 = p.totalQty > 0 && prevClose > 0 && baseAvg > 0 && prevSurgePrice > baseAvg && prevSurgePrice < stdSell12;
       const v1Variant = (canSuggestModV1 && cfg.v1Variant === 'modified') ? 'modified' : 'standard';
@@ -1787,32 +1784,37 @@
       const v4 = calc.v4;
       const isModified = v1.variant === 'modified';
 
-      // 평단 < 전일종가×1.25 < 평단×1.12 조건 충족 시에만 변형 Ver 1.0 선택 스위처 노출
+      // 변형 Ver 1.0 탭은 항상 보이되, 조건 미충족 시 비활성화(disabled)
       const headerEl = document.getElementById('v1CardHeader');
-      const singleBadge = document.getElementById('v1SingleBadge');
-      const switcherEl = document.getElementById('v1VariantSwitcher');
       const stdBtn = document.getElementById('v1StdBtn');
       const modBtn = document.getElementById('v1ModBtn');
       const titleEl = document.getElementById('v1CardTitle');
 
       if (v1.canSuggestModV1) {
-        singleBadge.classList.add('hidden');
-        switcherEl.classList.remove('hidden');
+        modBtn.disabled = false;
+        modBtn.removeAttribute('aria-disabled');
+        modBtn.title = `전일종가(${fmtUsd(calc.prevClose)}) × 1.25 = ${fmtUsd(v1.prevSurgePrice)} (제안 가능)`;
       } else {
-        singleBadge.classList.remove('hidden');
-        switcherEl.classList.add('hidden');
+        modBtn.disabled = true;
+        modBtn.setAttribute('aria-disabled', 'true');
+        modBtn.title = `제안 불가: 평단(${fmtUsd(calc.baseAvg)}) < 전일종가×1.25(${fmtUsd(v1.prevSurgePrice)}) < 평단×1.12(${fmtUsd(v1.stdSell12)}) 구간에서만 활성화됩니다`;
       }
 
       if (isModified) {
         headerEl.className = 'bg-indigo-950 text-white px-4 py-3.5 flex items-center justify-between gap-2 transition-colors';
         stdBtn.className = 'px-2 py-0.5 rounded-md font-bold text-slate-300 hover:text-white transition no-wrap cursor-pointer';
         modBtn.className = 'px-2 py-0.5 rounded-md font-extrabold bg-violet-500 text-white shadow-xs transition no-wrap cursor-pointer';
-        titleEl.textContent = '전일종가+25% LOC 조기익절 제안';
+        titleEl.textContent = '전일종가+25% LOC 조기익절 (제안 가능)';
       } else {
         headerEl.className = 'bg-slate-800 text-white px-4 py-3.5 flex items-center justify-between gap-2 transition-colors';
         stdBtn.className = 'px-2 py-0.5 rounded-md font-extrabold bg-indigo-500 text-white shadow-xs transition no-wrap cursor-pointer';
-        modBtn.className = 'px-2 py-0.5 rounded-md font-bold text-slate-300 hover:text-white transition no-wrap cursor-pointer';
-        titleEl.textContent = v1.canSuggestModV1 ? '고정 분할 · 지정가 익절 (변형 1.0 제안가능)' : '고정 분할 · 지정가 익절 전략';
+        if (v1.canSuggestModV1) {
+          modBtn.className = 'px-2 py-0.5 rounded-md font-bold text-slate-200 hover:text-white transition no-wrap cursor-pointer';
+          titleEl.textContent = '고정 분할 · 지정가 익절 (제안 가능)';
+        } else {
+          modBtn.className = 'px-2 py-0.5 rounded-md font-semibold text-slate-500 opacity-50 cursor-not-allowed transition no-wrap';
+          titleEl.textContent = '고정 분할 · 지정가 익절 (제안 불가)';
+        }
       }
 
       const prevSubText = v1.canSuggestModV1 ? ` · 전일종가 ${fmtUsd(calc.prevClose)}` : '';
@@ -2170,6 +2172,12 @@
     function setV1Variant(variant) {
       const tickerObj = getActiveTickerObj();
       if (!tickerObj) return;
+      const p = computePortfolio(tickerObj);
+      const calc = calculateOrdersData(tickerObj, p);
+      if (variant === 'modified' && !calc.v1.canSuggestModV1) {
+        showToast('평단 < 전일종가×1.25 < 평단×1.12 조건을 충족해야 변형 Ver 1.0을 선택할 수 있습니다.');
+        return;
+      }
       tickerObj.config.v1Variant = variant === 'modified' ? 'modified' : 'standard';
       saveState();
       renderAll();
