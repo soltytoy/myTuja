@@ -140,10 +140,10 @@
       margin-left: 2px;
     }
     
-    /* 기초 운용 설정 7개 박스 1행 고정 (좁은 화면 가로 스크롤) */
+    /* 기초 운용 설정 8개 박스 1행 고정 (좁은 화면 가로 스크롤) */
     .config-scroll {
       display: grid;
-      grid-template-columns: minmax(90px, 1fr) minmax(128px, 1.3fr) minmax(114px, 1.2fr) minmax(94px, 1fr) minmax(106px, 1.1fr) minmax(84px, 0.9fr) minmax(146px, 1.5fr);
+      grid-template-columns: minmax(84px, 0.95fr) minmax(122px, 1.25fr) minmax(108px, 1.15fr) minmax(88px, 0.95fr) minmax(100px, 1.05fr) minmax(76px, 0.85fr) minmax(94px, 1fr) minmax(138px, 1.4fr);
       gap: 8px;
       overflow-x: auto;
       padding-bottom: 4px;
@@ -235,7 +235,7 @@
       <div class="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between gap-2">
         <div id="tickerTabsContainer" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 flex-1"></div>
         <div class="flex items-center gap-1.5 shrink-0">
-          <button type="button" onclick="refreshAllPrices(true)" title="전 종목 실시간 시세 및 환율 새로고침" class="px-2.5 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-bold transition no-wrap cursor-pointer">
+          <button type="button" onclick="refreshAllPrices(true)" title="전 종목 실시간 시세, 전일 종가 및 환율 새로고침" class="px-2.5 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-bold transition no-wrap cursor-pointer">
             ↻ 전종목 시세
           </button>
           <button type="button" onclick="openAddTickerModal()" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold shadow-xs transition no-wrap cursor-pointer">
@@ -383,7 +383,7 @@
          ===================================================================== -->
     <div id="tickerDetailView" class="hidden space-y-5">
 
-      <!-- 1. 기초 운용 설정 (투자 비중 % 포함 · 직접 수정 패널) -->
+      <!-- 1. 기초 운용 설정 (투자 비중 % 및 전일 종가 포함 · 직접 수정 패널) -->
       <section aria-label="기초 운용 설정" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4">
         <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
           <h2 class="text-sm font-extrabold text-slate-800 flex items-center gap-1.5">
@@ -412,14 +412,14 @@
           </div>
         </div>
 
-        <!-- 7개 핵심 파라미터 1행 배치 (투자 비중 % + 투자운영금 읽기전용) -->
+        <!-- 8개 핵심 파라미터 1행 배치 (전일 종가 포함) -->
         <div class="config-scroll">
-          <div class="form-field min-w-[88px]">
+          <div class="form-field min-w-[84px]">
             <label for="cfgTicker" class="text-[11px] font-bold text-slate-500 mb-1 no-wrap text-center">종목 (Ticker)</label>
             <input id="cfgTicker" type="text" maxlength="12" class="form-control uppercase font-extrabold text-blue-700 px-2 text-xs sm:text-sm text-center" value="SOXL" onchange="updateBasicConfig('ticker')" />
           </div>
 
-          <div class="form-field min-w-[118px]">
+          <div class="form-field min-w-[116px]">
             <div class="flex items-center gap-1 mb-1">
               <label for="cfgAllocPct" class="flex-1 text-[11px] font-bold text-indigo-600 no-wrap text-center">투자 비중 (%)</label>
               <span aria-hidden="true" class="px-1.5 text-[11px] font-bold opacity-0 pointer-events-none select-none shrink-0 no-wrap">적용</span>
@@ -432,34 +432,39 @@
             </div>
           </div>
 
-          <div class="form-field min-w-[114px]">
+          <div class="form-field min-w-[108px]">
             <label for="cfgKrw" class="text-[11px] font-bold text-slate-500 mb-1 no-wrap text-center">투자운영금 (원)</label>
             <input id="cfgKrw" type="text" readonly title="총 투자원금 × 투자 비중(%)으로 자동 계산됩니다" class="form-control font-bold tabular-nums px-2 text-xs sm:text-sm text-center" value="10,000,000" />
           </div>
 
-          <div class="form-field min-w-[92px]">
+          <div class="form-field min-w-[88px]">
             <label for="cfgRate" class="text-[11px] font-bold text-slate-500 mb-1 no-wrap text-center">적용환율 (원/$)</label>
             <input id="cfgRate" type="text" inputmode="decimal" class="form-control font-bold tabular-nums px-2 text-xs sm:text-sm text-center" value="1,336" oninput="formatDecimalCommaInput(this)" onchange="updateBasicConfig('rate')" />
           </div>
 
-          <div class="form-field min-w-[104px]">
+          <div class="form-field min-w-[100px]">
             <label for="cfgUsd" class="text-[11px] font-bold text-slate-500 mb-1 no-wrap text-center">달러원금 ($)</label>
             <input id="cfgUsd" type="text" inputmode="decimal" class="form-control font-extrabold text-blue-700 tabular-nums px-2 text-xs sm:text-sm text-center" value="7,485.03" oninput="formatDecimalCommaInput(this)" onchange="updateBasicConfig('usd')" />
           </div>
 
-          <div class="form-field min-w-[80px]">
+          <div class="form-field min-w-[76px]">
             <label for="cfgSplits" class="text-[11px] font-bold text-slate-500 mb-1 no-wrap text-center">분할수 (40)</label>
             <input id="cfgSplits" type="number" min="10" max="100" class="form-control font-bold tabular-nums px-2 text-xs sm:text-sm text-center" value="40" onchange="updateBasicConfig('splits')" />
           </div>
 
-          <div class="form-field min-w-[140px]">
+          <div class="form-field min-w-[94px]">
+            <label for="prevCloseInput" class="text-[11px] font-bold text-violet-700 mb-1 no-wrap text-center" title="평단 < 전일 종가 × 1.25 < 평단 × 1.12 구간에서 변형 Ver 1.0 LOC 조기익절이 제안됩니다">전일 종가 ($)</label>
+            <input id="prevCloseInput" type="text" inputmode="decimal" class="form-control font-extrabold text-violet-700 tabular-nums px-2 text-xs sm:text-sm text-center" value="0.00" onchange="updatePrevClose()" onkeydown="if(event.key==='Enter'){ event.preventDefault(); updatePrevClose(); }" />
+          </div>
+
+          <div class="form-field min-w-[138px]">
             <div class="flex items-center gap-1 mb-1">
               <label for="currentPriceInput" class="flex-1 text-[11px] font-bold text-slate-500 no-wrap text-center">실시간 현재가 ($)</label>
               <span aria-hidden="true" class="px-2.5 text-xs font-bold opacity-0 pointer-events-none select-none shrink-0 no-wrap">조회</span>
             </div>
             <div class="flex gap-1">
               <input id="currentPriceInput" type="text" inputmode="decimal" class="form-control font-extrabold text-emerald-700 tabular-nums px-2 text-xs sm:text-sm text-center" value="0.00" onkeydown="if(event.key==='Enter'){ event.preventDefault(); applyCurrentPrice(); }" />
-              <button type="button" onclick="applyCurrentPrice()" title="입력한 현재가 반영 (빈칸일 경우 API 조회)" class="px-2.5 h-[44px] rounded-[10px] bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold shrink-0 transition no-wrap cursor-pointer">
+              <button type="button" onclick="applyCurrentPrice()" title="입력한 현재가 반영 (빈칸일 경우 API로 현재가·전일종가 조회)" class="px-2.5 h-[44px] rounded-[10px] bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold shrink-0 transition no-wrap cursor-pointer">
                 조회
               </button>
             </div>
@@ -506,18 +511,30 @@
         </div>
       </section>
 
-      <!-- 3. 라오어 1.0 vs 4.0 듀얼 다음 날 주문 계산기 -->
+      <!-- 3. 라오어 1.0(조건 충족 시 변형 1.0 제안) vs 4.0 듀얼 다음 날 주문 계산기 -->
       <section aria-label="다음 날 주문 계산기" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-          <div class="bg-slate-800 text-white px-4 py-3.5 flex items-center justify-between gap-2">
+          <div id="v1CardHeader" class="bg-slate-800 text-white px-4 py-3.5 flex items-center justify-between gap-2 transition-colors">
             <div>
-              <div class="flex items-center gap-2">
-                <span class="px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-indigo-500 text-white">Ver 1.0</span>
-                <h3 class="font-bold text-sm">고정 분할 · 단순 익절 전략</h3>
+              <div class="flex items-center flex-wrap gap-1.5">
+                <!-- 기본 Ver 1.0 고정 배지 (조건 미충족 시) -->
+                <span id="v1SingleBadge" class="px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-indigo-500 text-white">Ver 1.0</span>
+
+                <!-- Ver 1.0 / 변형 Ver 1.0 선택 스위처 (평단 < 전일종가×1.25 < 평단×1.12 충족 시에만 표시) -->
+                <div id="v1VariantSwitcher" class="hidden inline-flex rounded-lg bg-slate-950/60 p-0.5 border border-white/15 text-[11px]">
+                  <button type="button" id="v1StdBtn" onclick="setV1Variant('standard')" class="px-2 py-0.5 rounded-md font-extrabold bg-indigo-500 text-white shadow-xs transition no-wrap cursor-pointer">
+                    Ver 1.0
+                  </button>
+                  <button type="button" id="v1ModBtn" onclick="setV1Variant('modified')" class="px-2 py-0.5 rounded-md font-bold text-slate-300 hover:text-white transition no-wrap cursor-pointer">
+                    변형 Ver 1.0
+                  </button>
+                </div>
+
+                <h3 id="v1CardTitle" class="font-bold text-sm">고정 분할 · 지정가 익절 전략</h3>
               </div>
               <p id="v1Subtitle" class="text-[11px] text-slate-300 mt-1 tabular-nums">1회기준 $0.00 · 금액진행 0.00회차</p>
             </div>
-            <button type="button" onclick="copyOrders('v1')" class="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-white transition no-wrap cursor-pointer">
+            <button type="button" onclick="copyOrders('v1')" class="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-white transition no-wrap cursor-pointer shrink-0">
               주문표 복사
             </button>
           </div>
@@ -533,7 +550,7 @@
               </div>
               <p id="v4Subtitle" class="text-[11px] text-sky-200 mt-1 tabular-nums">전반전 (T &lt; 20) · 별% +20.00% · 별지점 $0.00</p>
             </div>
-            <button type="button" onclick="copyOrders('v4')" class="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-white transition no-wrap cursor-pointer">
+            <button type="button" onclick="copyOrders('v4')" class="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-white transition no-wrap cursor-pointer shrink-0">
               주문표 복사
             </button>
           </div>
@@ -804,7 +821,7 @@
               표시
             </button>
           </div>
-          <p id="apiProviderDesc" class="text-[11px] text-slate-500 leading-relaxed">Twelve Data 무료 키는 일 800회 호출 및 미국 ETF/주식 실시간 시세와 USD/KRW 환율을 지원합니다. 로그인 시 본인 클라우드 계정에 저장됩니다.</p>
+          <p id="apiProviderDesc" class="text-[11px] text-slate-500 leading-relaxed">Twelve Data 무료 키는 일 800회 호출 및 미국 ETF/주식 실시간 시세와 전일 종가, USD/KRW 환율을 지원합니다. 로그인 시 본인 클라우드 계정에 저장됩니다.</p>
         </div>
 
         <div id="apiTestResult" class="hidden rounded-xl p-3 text-xs font-bold"></div>
@@ -901,7 +918,9 @@
           usdCapital: usd,
           splits: splits,
           orderMode: 'fixed',
+          v1Variant: 'standard', // 'standard' (Ver 1.0) | 'modified' (변형 Ver 1.0)
           targetQty: targetQty,
+          prevClose: 0,
           currentPrice: 0
         },
         transactions: []
@@ -1394,6 +1413,7 @@
       const cfg = tickerObj.config;
       const splits = Math.max(10, Number(cfg.splits) || 40);
       const baseAvg = p.avgPrice > 0 ? p.avgPrice : (Number(cfg.currentPrice) || 0);
+      const prevClose = Number(cfg.prevClose) || 0;
       const targetQty = Math.max(1, Number(cfg.targetQty) || 4);
 
       const v1UnitBudget = cfg.usdCapital / splits;
@@ -1402,9 +1422,23 @@
       const v1BigQty = targetQty - v1HalfQty;
       const v1AmtHalfQty = baseAvg > 0 ? Math.floor((v1UnitBudget * 0.5) / baseAvg) : 0;
 
-      const v1SellPrice10 = Number((baseAvg * 1.10).toFixed(2));
-      const v1SellPrice12 = Number((baseAvg * 1.12).toFixed(2));
-      const v1MinSell = p.totalQty > 0 ? v1SellPrice10 : null;
+      // 기본 Ver 1.0 매도가 (지정가 +10% / +12%)
+      const stdSell10 = Number((baseAvg * 1.10).toFixed(2));
+      const stdSell12 = Number((baseAvg * 1.12).toFixed(2));
+
+      // 변형 Ver 1.0 제안 조건: 보유수량 > 0 이고, 평단 < 전일종가 × 1.25 < 평단 × 1.12 일 때만 제안
+      const prevSurgePrice = Number((prevClose * 1.25).toFixed(2));
+      const canSuggestModV1 = p.totalQty > 0 && prevClose > 0 && baseAvg > 0 && prevSurgePrice > baseAvg && prevSurgePrice < stdSell12;
+      const v1Variant = (canSuggestModV1 && cfg.v1Variant === 'modified') ? 'modified' : 'standard';
+
+      const modSell10 = canSuggestModV1 ? Math.min(prevSurgePrice, stdSell10) : stdSell10;
+      const modSell12 = canSuggestModV1 ? Math.min(prevSurgePrice, stdSell12) : stdSell12;
+      const modSell10Pct = baseAvg > 0 ? ((modSell10 / baseAvg - 1) * 100) : 10;
+      const modSell12Pct = baseAvg > 0 ? ((modSell12 / baseAvg - 1) * 100) : 12;
+
+      const activeSell10 = v1Variant === 'modified' ? modSell10 : stdSell10;
+      const activeSell12 = v1Variant === 'modified' ? modSell12 : stdSell12;
+      const v1MinSell = p.totalQty > 0 ? Math.min(activeSell10, activeSell12) : null;
 
       const v1AvgBuy = capBuyPrice(baseAvg, v1MinSell);
       const v1BigBuy = capBuyPrice(baseAvg * 1.15, v1MinSell);
@@ -1434,8 +1468,11 @@
       return {
         splits,
         baseAvg,
+        prevClose,
         targetQty,
         v1: {
+          canSuggestModV1,
+          variant: v1Variant,
           unitBudget: v1UnitBudget,
           round: v1Round,
           halfQty: v1HalfQty,
@@ -1443,8 +1480,13 @@
           amtHalfQty: v1AmtHalfQty,
           avgBuy: v1AvgBuy,
           bigBuy: v1BigBuy,
-          sell10: v1SellPrice10,
-          sell12: v1SellPrice12
+          stdSell10,
+          stdSell12,
+          modSell10,
+          modSell12,
+          modSell10Pct,
+          modSell12Pct,
+          prevSurgePrice
         },
         v4: {
           unitBudget: v4UnitBudget,
@@ -1653,6 +1695,7 @@
       document.getElementById('cfgRate').value = formatDecimalNumber(cfg.exchangeRate, 2);
       document.getElementById('cfgUsd').value = Number(cfg.usdCapital).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       document.getElementById('cfgSplits').value = cfg.splits;
+      document.getElementById('prevCloseInput').value = (Number(cfg.prevClose) || 0).toFixed(2);
       document.getElementById('currentPriceInput').value = Number(cfg.currentPrice).toFixed(2);
 
       const fixedBtn = document.getElementById('modeFixedBtn');
@@ -1742,8 +1785,38 @@
       const calc = calculateOrdersData(tickerObj, p);
       const v1 = calc.v1;
       const v4 = calc.v4;
+      const isModified = v1.variant === 'modified';
 
-      document.getElementById('v1Subtitle').textContent = `1회기준 ${fmtUsd(v1.unitBudget)} · 금액진행 ${v1.round.toFixed(2)}회차`;
+      // 평단 < 전일종가×1.25 < 평단×1.12 조건 충족 시에만 변형 Ver 1.0 선택 스위처 노출
+      const headerEl = document.getElementById('v1CardHeader');
+      const singleBadge = document.getElementById('v1SingleBadge');
+      const switcherEl = document.getElementById('v1VariantSwitcher');
+      const stdBtn = document.getElementById('v1StdBtn');
+      const modBtn = document.getElementById('v1ModBtn');
+      const titleEl = document.getElementById('v1CardTitle');
+
+      if (v1.canSuggestModV1) {
+        singleBadge.classList.add('hidden');
+        switcherEl.classList.remove('hidden');
+      } else {
+        singleBadge.classList.remove('hidden');
+        switcherEl.classList.add('hidden');
+      }
+
+      if (isModified) {
+        headerEl.className = 'bg-indigo-950 text-white px-4 py-3.5 flex items-center justify-between gap-2 transition-colors';
+        stdBtn.className = 'px-2 py-0.5 rounded-md font-bold text-slate-300 hover:text-white transition no-wrap cursor-pointer';
+        modBtn.className = 'px-2 py-0.5 rounded-md font-extrabold bg-violet-500 text-white shadow-xs transition no-wrap cursor-pointer';
+        titleEl.textContent = '전일종가+25% LOC 조기익절 제안';
+      } else {
+        headerEl.className = 'bg-slate-800 text-white px-4 py-3.5 flex items-center justify-between gap-2 transition-colors';
+        stdBtn.className = 'px-2 py-0.5 rounded-md font-extrabold bg-indigo-500 text-white shadow-xs transition no-wrap cursor-pointer';
+        modBtn.className = 'px-2 py-0.5 rounded-md font-bold text-slate-300 hover:text-white transition no-wrap cursor-pointer';
+        titleEl.textContent = v1.canSuggestModV1 ? '고정 분할 · 지정가 익절 (변형 1.0 제안가능)' : '고정 분할 · 지정가 익절 전략';
+      }
+
+      const prevSubText = v1.canSuggestModV1 ? ` · 전일종가 ${fmtUsd(calc.prevClose)}` : '';
+      document.getElementById('v1Subtitle').textContent = `1회기준 ${fmtUsd(v1.unitBudget)} · 금액진행 ${v1.round.toFixed(2)}회차${prevSubText}`;
 
       let v1Html = '';
       if (p.totalQty === 0) {
@@ -1776,22 +1849,61 @@
           </div>
         `;
 
+        let sellBlockHtml = '';
+        if (!isModified) {
+          const suggestHint = v1.canSuggestModV1
+            ? `<button type="button" onclick="setV1Variant('modified')" class="ml-auto px-2 py-0.5 rounded bg-violet-100 hover:bg-violet-200 text-violet-800 border border-violet-300 text-[10px] font-extrabold no-wrap cursor-pointer">변형 1.0 보기 (${fmtUsd(v1.modSell12)} LOC) →</button>`
+            : '';
+
+          sellBlockHtml = `
+            <div class="rounded-xl bg-emerald-50/70 border border-emerald-100 p-3">
+              <div class="text-xs font-bold text-emerald-900 mb-1.5 flex items-center flex-wrap gap-1">
+                <span>매도 주문 (전량 지정가 익절)</span>
+                ${suggestHint}
+              </div>
+              <div class="flex items-center justify-between gap-2 py-1.5 border-b border-emerald-100/70">
+                <span class="text-slate-600">기본 익절 (+10%)</span>
+                <span class="font-bold text-emerald-700 no-wrap">${fmtUsd(v1.stdSell10)} × ${p.totalQty}주</span>
+              </div>
+              <div class="flex items-center justify-between gap-2 py-1.5">
+                <span class="text-slate-600">레버리지 권장 익절 (+12%)</span>
+                <span class="font-bold text-emerald-700 no-wrap">${fmtUsd(v1.stdSell12)} × ${p.totalQty}주</span>
+              </div>
+            </div>
+          `;
+        } else {
+          const surgeBadge = `<span class="ml-1.5 px-1.5 py-0.5 rounded bg-violet-100 text-violet-800 border border-violet-300 text-[10px] font-extrabold no-wrap" title="평단(${fmtUsd(calc.baseAvg)}) < 전일종가(${fmtUsd(calc.prevClose)}) × 1.25 = ${fmtUsd(v1.prevSurgePrice)} < 평단×1.12(${fmtUsd(v1.stdSell12)}) 구간 충족">전일종가+25% 조기익절 LOC</span>`;
+
+          const sell10Title = v1.modSell10 < v1.stdSell10
+            ? `조기 LOC 익절 (+${v1.modSell10Pct.toFixed(2)}%)`
+            : `기본 LOC 익절 (+10%)`;
+
+          const sell12Title = `레버리지 조기 LOC 익절 (+${v1.modSell12Pct.toFixed(2)}%)`;
+
+          sellBlockHtml = `
+            <div class="rounded-xl bg-violet-50/60 border border-violet-200 p-3">
+              <div class="text-xs font-bold text-violet-950 mb-1.5 flex items-center flex-wrap gap-1">
+                <span>매도 주문 (전량 장마감 LOC 익절)</span>
+                ${surgeBadge}
+              </div>
+              <div class="flex items-center justify-between gap-2 py-1.5 border-b border-violet-100">
+                <span class="text-slate-600">${sell10Title}</span>
+                <span class="font-bold text-violet-700 no-wrap">${fmtUsd(v1.modSell10)} × ${p.totalQty}주</span>
+              </div>
+              <div class="flex items-center justify-between gap-2 py-1.5">
+                <span class="text-slate-600">${sell12Title}</span>
+                <span class="font-bold text-violet-700 no-wrap">${fmtUsd(v1.modSell12)} × ${p.totalQty}주</span>
+              </div>
+            </div>
+          `;
+        }
+
         v1Html = `
           <div class="rounded-xl bg-blue-50/70 border border-blue-100 p-3">
             <div class="text-xs font-bold text-blue-900 mb-1.5">매수 주문 (장마감 LOC)</div>
             ${buyRows}
           </div>
-          <div class="rounded-xl bg-emerald-50/70 border border-emerald-100 p-3">
-            <div class="text-xs font-bold text-emerald-900 mb-1.5">매도 주문 (전량 지정가 익절)</div>
-            <div class="flex items-center justify-between gap-2 py-1.5 border-b border-emerald-100/70">
-              <span class="text-slate-600">기본 익절 (+10%)</span>
-              <span class="font-bold text-emerald-700 no-wrap">${fmtUsd(v1.sell10)} × ${p.totalQty}주</span>
-            </div>
-            <div class="flex items-center justify-between gap-2 py-1.5">
-              <span class="text-slate-600">레버리지 권장 익절 (+12%)</span>
-              <span class="font-bold text-emerald-700 no-wrap">${fmtUsd(v1.sell12)} × ${p.totalQty}주</span>
-            </div>
-          </div>
+          ${sellBlockHtml}
         `;
       }
       document.getElementById('v1Body').innerHTML = v1Html;
@@ -2055,12 +2167,45 @@
       renderAll();
     }
 
+    function setV1Variant(variant) {
+      const tickerObj = getActiveTickerObj();
+      if (!tickerObj) return;
+      tickerObj.config.v1Variant = variant === 'modified' ? 'modified' : 'standard';
+      saveState();
+      renderAll();
+    }
+
     function changeTargetQty(delta) {
       const tickerObj = getActiveTickerObj();
       if (!tickerObj) return;
       tickerObj.config.targetQty = Math.max(1, (Number(tickerObj.config.targetQty) || 4) + delta);
       saveState();
       renderAll();
+    }
+
+    function updatePrevClose() {
+      const tickerObj = getActiveTickerObj();
+      if (!tickerObj) return;
+      const inputEl = document.getElementById('prevCloseInput');
+      const raw = String(inputEl.value).replace(/,/g, '').trim();
+
+      if (!raw) {
+        tickerObj.config.prevClose = 0;
+        saveState();
+        renderAll();
+        return;
+      }
+
+      const num = parseFloat(raw);
+      if (isNaN(num) || num < 0) {
+        showToast('올바른 전일 종가 숫자를 입력해 주세요.');
+        return;
+      }
+
+      tickerObj.config.prevClose = Number(num.toFixed(2));
+      saveState();
+      renderAll();
+      showToast(`${tickerObj.config.ticker} 전일 종가 ${fmtUsd(tickerObj.config.prevClose)} 반영 완료`);
     }
 
     function applyCurrentPrice() {
@@ -2265,11 +2410,19 @@
         const v1 = calc.v1;
         const avgQ = cfg.orderMode === 'fixed' ? v1.halfQty : v1.amtHalfQty;
         const bigQ = cfg.orderMode === 'fixed' ? v1.bigQty : v1.amtHalfQty;
-        text = `[${cfg.ticker} 라오어 1.0 주문표]\n` +
-               `- 평단 LOC 매수: $${v1.avgBuy.price.toFixed(2)} × ${avgQ}주${v1.avgBuy.capped ? ' (자전방지 상한적용)' : ''}\n` +
-               `- 큰수 LOC 매수: $${v1.bigBuy.price.toFixed(2)} × ${bigQ}주${v1.bigBuy.capped ? ' (자전방지 상한적용)' : ''}\n` +
-               `- 전량 지정가 매도(+10%): $${v1.sell10.toFixed(2)} × ${p.totalQty}주\n` +
-               `- 전량 지정가 매도(+12%): $${v1.sell12.toFixed(2)} × ${p.totalQty}주`;
+        if (v1.variant === 'modified') {
+          text = `[${cfg.ticker} 변형 Ver 1.0 주문표 | 전일종가 $${calc.prevClose.toFixed(2)} × 1.25 조기익절 LOC]\n` +
+                 `- 평단 LOC 매수: $${v1.avgBuy.price.toFixed(2)} × ${avgQ}주${v1.avgBuy.capped ? ' (자전방지 상한적용)' : ''}\n` +
+                 `- 큰수 LOC 매수: $${v1.bigBuy.price.toFixed(2)} × ${bigQ}주${v1.bigBuy.capped ? ' (자전방지 상한적용)' : ''}\n` +
+                 `- 전량 LOC 매도(+${v1.modSell10Pct.toFixed(2)}%): $${v1.modSell10.toFixed(2)} × ${p.totalQty}주\n` +
+                 `- 전량 LOC 매도(+${v1.modSell12Pct.toFixed(2)}%): $${v1.modSell12.toFixed(2)} × ${p.totalQty}주`;
+        } else {
+          text = `[${cfg.ticker} 라오어 Ver 1.0 주문표]\n` +
+                 `- 평단 LOC 매수: $${v1.avgBuy.price.toFixed(2)} × ${avgQ}주${v1.avgBuy.capped ? ' (자전방지 상한적용)' : ''}\n` +
+                 `- 큰수 LOC 매수: $${v1.bigBuy.price.toFixed(2)} × ${bigQ}주${v1.bigBuy.capped ? ' (자전방지 상한적용)' : ''}\n` +
+                 `- 전량 지정가 매도(+10%): $${v1.stdSell10.toFixed(2)} × ${p.totalQty}주\n` +
+                 `- 전량 지정가 매도(+12%): $${v1.stdSell12.toFixed(2)} × ${p.totalQty}주`;
+        }
       } else {
         const v4 = calc.v4;
         const isFirstHalf = p.tValue < (calc.splits / 2);
@@ -2383,11 +2536,11 @@
         if (prov === 'finnhub') {
           keyInput.placeholder = 'Finnhub API Key 입력 (예: cxxxxxxxxxxxxx)';
           helpLink.href = 'https://finnhub.io/register';
-          desc.textContent = 'Finnhub 무료 키는 분당 60회 호출 및 미국주식 실시간 현재가(c) 조회를 지원합니다.';
+          desc.textContent = 'Finnhub 무료 키는 분당 60회 호출 및 미국주식 실시간 현재가(c)와 전일 종가(pc) 조회를 지원합니다.';
         } else {
           keyInput.placeholder = 'Twelve Data API Key 입력';
           helpLink.href = 'https://twelvedata.com/pricing';
-          desc.textContent = 'Twelve Data 무료 키는 일 800회 호출 및 미국 ETF/주식 실시간 시세와 USD/KRW 환율을 지원합니다. 로그인 시 본인 클라우드 계정에 저장됩니다.';
+          desc.textContent = 'Twelve Data 무료 키는 일 800회 호출 및 미국 ETF/주식 실시간 시세와 전일 종가, USD/KRW 환율을 지원합니다. 로그인 시 본인 클라우드 계정에 저장됩니다.';
         }
         if (shouldFocus) keyInput.focus();
       }
@@ -2405,18 +2558,30 @@
       }
     }
 
-    async function queryTickerPrice(provider, key, ticker) {
+    async function queryTickerQuote(provider, key, ticker) {
       if (provider === 'finnhub') {
         const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(ticker)}&token=${encodeURIComponent(key)}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        if (data && typeof data.c === 'number' && data.c > 0) return data.c;
+        if (data && typeof data.c === 'number' && data.c > 0) {
+          return {
+            price: data.c,
+            prevClose: (typeof data.pc === 'number' && data.pc > 0) ? data.pc : null
+          };
+        }
         throw new Error('유효한 시세 데이터가 없습니다. API Key 또는 티커를 확인하세요.');
       } else if (provider === 'twelvedata') {
-        const res = await fetch(`https://api.twelvedata.com/price?symbol=${encodeURIComponent(ticker)}&apikey=${encodeURIComponent(key)}`);
+        const res = await fetch(`https://api.twelvedata.com/quote?symbol=${encodeURIComponent(ticker)}&apikey=${encodeURIComponent(key)}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        if (data && data.price && !isNaN(parseFloat(data.price))) return parseFloat(data.price);
+        const closeVal = data && data.close ? parseFloat(data.close) : NaN;
+        const prevVal = data && data.previous_close ? parseFloat(data.previous_close) : NaN;
+        if (!isNaN(closeVal) && closeVal > 0) {
+          return {
+            price: closeVal,
+            prevClose: (!isNaN(prevVal) && prevVal > 0) ? prevVal : null
+          };
+        }
         throw new Error(data.message || '시세 조회 실패');
       }
       throw new Error('제공사가 선택되지 않았습니다.');
@@ -2452,7 +2617,7 @@
       const sampleTicker = (state.tickers[0] && state.tickers[0].config.ticker) || 'SOXL';
       if (selectedModalProvider === 'none') {
         resBox.className = 'rounded-xl p-3 text-xs font-semibold bg-slate-100 text-slate-700';
-        resBox.textContent = '수동 입력 모드입니다. 대시보드 현재가 칸에 직접 숫자를 입력해 사용합니다.';
+        resBox.textContent = '수동 입력 모드입니다. 대시보드 현재가 및 전일 종가 칸에 직접 숫자를 입력해 사용합니다.';
         resBox.classList.remove('hidden');
         return;
       }
@@ -2469,9 +2634,10 @@
       resBox.classList.remove('hidden');
 
       try {
-        const price = await queryTickerPrice(selectedModalProvider, key, sampleTicker);
+        const quote = await queryTickerQuote(selectedModalProvider, key, sampleTicker);
+        const prevText = quote.prevClose ? ` (전일종가: ${fmtUsd(quote.prevClose)})` : '';
         resBox.className = 'rounded-xl p-3 text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200';
-        resBox.textContent = `연결 성공! ${sampleTicker} 현재가: ${fmtUsd(price)}`;
+        resBox.textContent = `연결 성공! ${sampleTicker} 현재가: ${fmtUsd(quote.price)}${prevText}`;
       } catch (err) {
         resBox.className = 'rounded-xl p-3 text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200';
         resBox.textContent = `연결 실패: ${err.message}`;
@@ -2514,11 +2680,17 @@
         return;
       }
       try {
-        const price = await queryTickerPrice(state.api.provider, state.api.key, tickerObj.config.ticker);
-        tickerObj.config.currentPrice = price;
+        const quote = await queryTickerQuote(state.api.provider, state.api.key, tickerObj.config.ticker);
+        tickerObj.config.currentPrice = quote.price;
+        if (quote.prevClose !== null) {
+          tickerObj.config.prevClose = quote.prevClose;
+        }
         saveState();
         renderAll();
-        if (notify) showToast(`${tickerObj.config.ticker} 현재가 ${fmtUsd(price)} 반영 완료`);
+        if (notify) {
+          const prevMsg = quote.prevClose !== null ? ` / 전일종가 ${fmtUsd(quote.prevClose)}` : '';
+          showToast(`${tickerObj.config.ticker} 현재가 ${fmtUsd(quote.price)}${prevMsg} 반영 완료`);
+        }
       } catch (e) {
         if (notify) showToast(`${tickerObj.config.ticker} 시세 조회 실패: ${e.message}`);
       }
@@ -2531,14 +2703,17 @@
       }
       for (const t of state.tickers) {
         try {
-          const price = await queryTickerPrice(state.api.provider, state.api.key, t.config.ticker);
-          t.config.currentPrice = price;
+          const quote = await queryTickerQuote(state.api.provider, state.api.key, t.config.ticker);
+          t.config.currentPrice = quote.price;
+          if (quote.prevClose !== null) {
+            t.config.prevClose = quote.prevClose;
+          }
         } catch (e) {}
       }
       await fetchLiveExchangeRate(false);
       saveState();
       renderAll();
-      if (notify) showToast('전 종목 실시간 시세 및 환율이 업데이트되었습니다.');
+      if (notify) showToast('전 종목 실시간 시세, 전일 종가 및 환율이 업데이트되었습니다.');
     }
 
     // 전역 window 바인딩 (HTML 인라인 onclick 이벤트용)
@@ -2551,7 +2726,9 @@
       applyAllocationToTicker,
       updateBasicConfig,
       setOrderMode,
+      setV1Variant,
       changeTargetQty,
+      updatePrevClose,
       applyCurrentPrice,
       openAddTickerModal,
       updateNewTickerCalcKrw,
