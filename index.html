@@ -511,29 +511,38 @@
         </div>
       </section>
 
-      <!-- 3. 라오어 1.0(조건 충족 시 변형 1.0 활성화 / 미충족 시 비활성화) vs 4.0 듀얼 다음 날 주문 계산기 -->
+      <!-- 3. 라오어 1.0(조건 충족 시 변형 1.0 활성화 / 미충족 시 터치 툴팁 비활성화) vs 4.0 듀얼 다음 날 주문 계산기 -->
       <section aria-label="다음 날 주문 계산기" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-          <div id="v1CardHeader" class="bg-slate-800 text-white px-4 py-3.5 flex items-center justify-between gap-2 transition-colors">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-visible flex flex-col">
+          <div id="v1CardHeader" class="relative rounded-t-2xl bg-slate-800 text-white px-4 py-3.5 flex items-center justify-between gap-2 transition-colors">
             <div>
               <div class="flex items-center flex-wrap gap-1.5">
-                <!-- Ver 1.0 / 변형 Ver 1.0 선택 스위처 (항상 표시 · 조건 미충족 시 변형 탭 비활성화) -->
+                <!-- Ver 1.0 / 변형 Ver 1.0 선택 스위처 (항상 표시 · 조건 미충족 시 터치/클릭 툴팁 제공) -->
                 <div id="v1VariantSwitcher" class="inline-flex rounded-lg bg-slate-950/60 p-0.5 border border-white/15 text-[11px]">
                   <button type="button" id="v1StdBtn" onclick="setV1Variant('standard')" class="px-2 py-0.5 rounded-md font-extrabold bg-indigo-500 text-white shadow-xs transition no-wrap cursor-pointer">
                     Ver 1.0
                   </button>
-                  <button type="button" id="v1ModBtn" onclick="setV1Variant('modified')" class="px-2 py-0.5 rounded-md font-bold text-slate-300 hover:text-white transition no-wrap cursor-pointer">
+                  <button type="button" id="v1ModBtn" onclick="handleV1ModClick(event)" class="px-2 py-0.5 rounded-md font-bold text-slate-300 hover:text-white transition no-wrap cursor-pointer">
                     변형 Ver 1.0
                   </button>
                 </div>
 
-                <h3 id="v1CardTitle" class="font-bold text-sm">고정 분할 · 지정가 익절 (제안 불가)</h3>
+                <h3 id="v1CardTitle" class="font-bold text-sm">고정 분할 · 지정가 익절 (변형 Ver 1.0 제안 불가)</h3>
               </div>
               <p id="v1Subtitle" class="text-[11px] text-slate-300 mt-1 tabular-nums">1회기준 $0.00 · 금액진행 0.00회차</p>
             </div>
             <button type="button" onclick="copyOrders('v1')" class="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-white transition no-wrap cursor-pointer shrink-0">
               주문표 복사
             </button>
+
+            <!-- iPad / 스마트폰 터치 & 데스크톱 클릭 지원 변형 Ver 1.0 안내 툴팁 팝오버 -->
+            <div id="v1ModTooltip" role="tooltip" onclick="event.stopPropagation()" class="hidden absolute left-4 top-full mt-2 z-40 w-[calc(100%-2rem)] max-w-sm rounded-xl bg-slate-900 text-white p-3.5 shadow-xl border border-slate-700 text-xs leading-relaxed">
+              <div class="flex items-start justify-between gap-2 mb-1.5">
+                <span class="font-extrabold text-amber-300">변형 Ver 1.0 제안 불가 안내</span>
+                <button type="button" onclick="hideV1ModTooltip()" aria-label="툴팁 닫기" class="text-slate-400 hover:text-white font-bold text-base leading-none px-1 cursor-pointer">&times;</button>
+              </div>
+              <p id="v1ModTooltipBody" class="text-slate-200 tabular-nums"></p>
+            </div>
           </div>
           <div id="v1Body" class="p-4 space-y-3 text-sm flex-1 tabular-nums"></div>
         </div>
@@ -1784,36 +1793,46 @@
       const v4 = calc.v4;
       const isModified = v1.variant === 'modified';
 
-      // 변형 Ver 1.0 탭은 항상 보이되, 조건 미충족 시 비활성화(disabled)
+      // 변형 Ver 1.0 탭은 항상 보이되, 조건 미충족 시 비활성화 스타일 및 터치/클릭 툴팁 제공
       const headerEl = document.getElementById('v1CardHeader');
       const stdBtn = document.getElementById('v1StdBtn');
       const modBtn = document.getElementById('v1ModBtn');
       const titleEl = document.getElementById('v1CardTitle');
+      const tooltipBodyEl = document.getElementById('v1ModTooltipBody');
+
+      const unavailableReason = p.totalQty === 0
+        ? `현재 보유 수량이 0주입니다. 보유수량 > 0 이고 평단 < 전일종가 × 1.25 < 평단 × 1.12 구간에서 활성화됩니다.`
+        : calc.prevClose <= 0
+          ? `상단 '전일 종가 ($)'를 입력하거나 실시간 시세를 조회해 주세요. 평단(${fmtUsd(calc.baseAvg)}) < 전일종가 × 1.25 < 평단 × 1.12(${fmtUsd(v1.stdSell12)}) 구간에서 활성화됩니다.`
+          : `평단(${fmtUsd(calc.baseAvg)}) < 전일종가×1.25(${fmtUsd(v1.prevSurgePrice)}) < 평단×1.12(${fmtUsd(v1.stdSell12)}) 구간을 벗어나 비활성화되었습니다.`;
+
+      if (tooltipBodyEl) {
+        tooltipBodyEl.textContent = unavailableReason;
+      }
 
       if (v1.canSuggestModV1) {
-        modBtn.disabled = false;
         modBtn.removeAttribute('aria-disabled');
-        modBtn.title = `전일종가(${fmtUsd(calc.prevClose)}) × 1.25 = ${fmtUsd(v1.prevSurgePrice)} (제안 가능)`;
+        modBtn.title = `전일종가(${fmtUsd(calc.prevClose)}) × 1.25 = ${fmtUsd(v1.prevSurgePrice)} (변형 Ver 1.0 제안 가능)`;
+        hideV1ModTooltip();
       } else {
-        modBtn.disabled = true;
         modBtn.setAttribute('aria-disabled', 'true');
-        modBtn.title = `제안 불가: 평단(${fmtUsd(calc.baseAvg)}) < 전일종가×1.25(${fmtUsd(v1.prevSurgePrice)}) < 평단×1.12(${fmtUsd(v1.stdSell12)}) 구간에서만 활성화됩니다`;
+        modBtn.title = `변형 Ver 1.0 제안 불가: ${unavailableReason}`;
       }
 
       if (isModified) {
-        headerEl.className = 'bg-indigo-950 text-white px-4 py-3.5 flex items-center justify-between gap-2 transition-colors';
+        headerEl.className = 'relative rounded-t-2xl bg-indigo-950 text-white px-4 py-3.5 flex items-center justify-between gap-2 transition-colors';
         stdBtn.className = 'px-2 py-0.5 rounded-md font-bold text-slate-300 hover:text-white transition no-wrap cursor-pointer';
         modBtn.className = 'px-2 py-0.5 rounded-md font-extrabold bg-violet-500 text-white shadow-xs transition no-wrap cursor-pointer';
-        titleEl.textContent = '전일종가+25% LOC 조기익절 (제안 가능)';
+        titleEl.textContent = '전일종가+25% LOC 조기익절 (변형 Ver 1.0 제안 가능)';
       } else {
-        headerEl.className = 'bg-slate-800 text-white px-4 py-3.5 flex items-center justify-between gap-2 transition-colors';
+        headerEl.className = 'relative rounded-t-2xl bg-slate-800 text-white px-4 py-3.5 flex items-center justify-between gap-2 transition-colors';
         stdBtn.className = 'px-2 py-0.5 rounded-md font-extrabold bg-indigo-500 text-white shadow-xs transition no-wrap cursor-pointer';
         if (v1.canSuggestModV1) {
           modBtn.className = 'px-2 py-0.5 rounded-md font-bold text-slate-200 hover:text-white transition no-wrap cursor-pointer';
-          titleEl.textContent = '고정 분할 · 지정가 익절 (제안 가능)';
+          titleEl.textContent = '고정 분할 · 지정가 익절 (변형 Ver 1.0 제안 가능)';
         } else {
           modBtn.className = 'px-2 py-0.5 rounded-md font-semibold text-slate-500 opacity-50 cursor-not-allowed transition no-wrap';
-          titleEl.textContent = '고정 분할 · 지정가 익절 (제안 불가)';
+          titleEl.textContent = '고정 분할 · 지정가 익절 (변형 Ver 1.0 제안 불가)';
         }
       }
 
@@ -2169,15 +2188,51 @@
       renderAll();
     }
 
+    function handleV1ModClick(event) {
+      if (event) event.stopPropagation();
+      const tickerObj = getActiveTickerObj();
+      if (!tickerObj) return;
+      const p = computePortfolio(tickerObj);
+      const calc = calculateOrdersData(tickerObj, p);
+      if (!calc.v1.canSuggestModV1) {
+        toggleV1ModTooltip();
+        return;
+      }
+      hideV1ModTooltip();
+      setV1Variant('modified');
+    }
+
+    function toggleV1ModTooltip() {
+      const tip = document.getElementById('v1ModTooltip');
+      if (!tip) return;
+      tip.classList.toggle('hidden');
+    }
+
+    function hideV1ModTooltip() {
+      const tip = document.getElementById('v1ModTooltip');
+      if (!tip) return;
+      tip.classList.add('hidden');
+    }
+
+    document.addEventListener('click', (e) => {
+      const tip = document.getElementById('v1ModTooltip');
+      const modBtn = document.getElementById('v1ModBtn');
+      if (!tip || tip.classList.contains('hidden')) return;
+      if (!tip.contains(e.target) && (!modBtn || !modBtn.contains(e.target))) {
+        hideV1ModTooltip();
+      }
+    });
+
     function setV1Variant(variant) {
       const tickerObj = getActiveTickerObj();
       if (!tickerObj) return;
       const p = computePortfolio(tickerObj);
       const calc = calculateOrdersData(tickerObj, p);
       if (variant === 'modified' && !calc.v1.canSuggestModV1) {
-        showToast('평단 < 전일종가×1.25 < 평단×1.12 조건을 충족해야 변형 Ver 1.0을 선택할 수 있습니다.');
+        toggleV1ModTooltip();
         return;
       }
+      hideV1ModTooltip();
       tickerObj.config.v1Variant = variant === 'modified' ? 'modified' : 'standard';
       saveState();
       renderAll();
@@ -2734,6 +2789,9 @@
       applyAllocationToTicker,
       updateBasicConfig,
       setOrderMode,
+      handleV1ModClick,
+      toggleV1ModTooltip,
+      hideV1ModTooltip,
       setV1Variant,
       changeTargetQty,
       updatePrevClose,
