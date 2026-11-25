@@ -512,11 +512,11 @@
       </section>
 
       <!-- 3. 라오어 1.0(조건 충족 시 변형 1.0 활성화 / 미충족 시 터치 툴팁 비활성화) vs 4.0 듀얼 다음 날 주문 계산기 -->
-      <section aria-label="다음 날 주문 계산기" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <section aria-label="다음 날 주문 계산기" class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-visible flex flex-col">
-          <div id="v1CardHeader" class="relative rounded-t-2xl bg-slate-800 text-white px-4 py-3.5 flex items-center justify-between gap-2 transition-colors">
+          <div id="v1CardHeader" class="relative rounded-t-2xl bg-slate-800 text-white px-4 py-3.5 min-h-[68px] flex items-center justify-between gap-2 transition-colors">
             <div>
-              <div class="flex items-center flex-wrap gap-1.5">
+              <div class="flex items-center flex-wrap gap-1.5 min-h-[24px]">
                 <!-- Ver 1.0 / 변형 Ver 1.0 선택 스위처 (항상 표시 · 조건 미충족 시 터치/클릭 툴팁 제공) -->
                 <div id="v1VariantSwitcher" class="inline-flex rounded-lg bg-slate-950/60 p-0.5 border border-white/15 text-[11px]">
                   <button type="button" id="v1StdBtn" onclick="setV1Variant('standard')" class="px-2 py-0.5 rounded-md font-extrabold bg-indigo-500 text-white shadow-xs transition no-wrap cursor-pointer">
@@ -527,9 +527,9 @@
                   </button>
                 </div>
 
-                <h3 id="v1CardTitle" class="font-bold text-sm">고정 분할 · 지정가 익절 (변형 Ver 1.0 제안 불가)</h3>
+                <h3 id="v1CardTitle" class="font-bold text-sm leading-tight">고정 분할 · 지정가 익절 (변형 Ver 1.0 제안 불가)</h3>
               </div>
-              <p id="v1Subtitle" class="text-[11px] text-slate-300 mt-1 tabular-nums">1회기준 $0.00 · 금액진행 0.00회차</p>
+              <p id="v1Subtitle" class="text-[11px] text-slate-300 mt-1 tabular-nums leading-tight">1회기준 $0.00 · 금액진행 0.00회차</p>
             </div>
             <button type="button" onclick="copyOrders('v1')" class="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-white transition no-wrap cursor-pointer shrink-0">
               주문표 복사
@@ -544,23 +544,23 @@
               <p id="v1ModTooltipBody" class="text-slate-200 tabular-nums"></p>
             </div>
           </div>
-          <div id="v1Body" class="p-4 space-y-3 text-sm flex-1 tabular-nums"></div>
+          <div id="v1Body" class="p-4 flex flex-col justify-between gap-3 text-sm flex-1 tabular-nums"></div>
         </div>
 
         <div class="bg-white rounded-2xl shadow-sm border border-blue-200 overflow-hidden flex flex-col">
-          <div class="bg-blue-900 text-white px-4 py-3.5 flex items-center justify-between gap-2">
+          <div class="rounded-t-2xl bg-blue-900 text-white px-4 py-3.5 min-h-[68px] flex items-center justify-between gap-2">
             <div>
-              <div class="flex items-center gap-2">
-                <span class="px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-sky-400 text-slate-950">Ver 4.0</span>
-                <h3 class="font-bold text-sm">동적 1회매수금 · 별지점(☆%) 전략</h3>
+              <div class="flex items-center flex-wrap gap-2 min-h-[24px]">
+                <span class="px-2 py-0.5 rounded-md text-[11px] font-extrabold bg-sky-400 text-slate-950 leading-normal no-wrap">Ver 4.0</span>
+                <h3 class="font-bold text-sm leading-tight">동적 1회매수금 · 별지점(☆%) 전략</h3>
               </div>
-              <p id="v4Subtitle" class="text-[11px] text-sky-200 mt-1 tabular-nums">전반전 (T &lt; 20) · 별% +20.00% · 별지점 $0.00</p>
+              <p id="v4Subtitle" class="text-[11px] text-sky-200 mt-1 tabular-nums leading-tight">전반전 (T &lt; 20) · 별% +20.00% · 별지점 $0.00</p>
             </div>
             <button type="button" onclick="copyOrders('v4')" class="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-white transition no-wrap cursor-pointer shrink-0">
               주문표 복사
             </button>
           </div>
-          <div id="v4Body" class="p-4 space-y-3 text-sm flex-1 tabular-nums"></div>
+          <div id="v4Body" class="p-4 flex flex-col justify-between gap-3 text-sm flex-1 tabular-nums"></div>
         </div>
       </section>
 
@@ -1437,14 +1437,11 @@
       const canSuggestModV1 = p.totalQty > 0 && prevClose > 0 && baseAvg > 0 && prevSurgePrice > baseAvg && prevSurgePrice < stdSell12;
       const v1Variant = (canSuggestModV1 && cfg.v1Variant === 'modified') ? 'modified' : 'standard';
 
-      const modSell10 = canSuggestModV1 ? Math.min(prevSurgePrice, stdSell10) : stdSell10;
       const modSell12 = canSuggestModV1 ? Math.min(prevSurgePrice, stdSell12) : stdSell12;
-      const modSell10Pct = baseAvg > 0 ? ((modSell10 / baseAvg - 1) * 100) : 10;
       const modSell12Pct = baseAvg > 0 ? ((modSell12 / baseAvg - 1) * 100) : 12;
 
-      const activeSell10 = v1Variant === 'modified' ? modSell10 : stdSell10;
-      const activeSell12 = v1Variant === 'modified' ? modSell12 : stdSell12;
-      const v1MinSell = p.totalQty > 0 ? Math.min(activeSell10, activeSell12) : null;
+      const activeMinSell = v1Variant === 'modified' ? modSell12 : Math.min(stdSell10, stdSell12);
+      const v1MinSell = p.totalQty > 0 ? activeMinSell : null;
 
       const v1AvgBuy = capBuyPrice(baseAvg, v1MinSell);
       const v1BigBuy = capBuyPrice(baseAvg * 1.15, v1MinSell);
@@ -1488,9 +1485,7 @@
           bigBuy: v1BigBuy,
           stdSell10,
           stdSell12,
-          modSell10,
           modSell12,
-          modSell10Pct,
           modSell12Pct,
           prevSurgePrice
         },
@@ -1820,16 +1815,16 @@
       }
 
       if (isModified) {
-        headerEl.className = 'relative rounded-t-2xl bg-indigo-950 text-white px-4 py-3.5 flex items-center justify-between gap-2 transition-colors';
+        headerEl.className = 'relative rounded-t-2xl bg-indigo-950 text-white px-4 py-3.5 min-h-[68px] flex items-center justify-between gap-2 transition-colors';
         stdBtn.className = 'px-2 py-0.5 rounded-md font-bold text-slate-300 hover:text-white transition no-wrap cursor-pointer';
         modBtn.className = 'px-2 py-0.5 rounded-md font-extrabold bg-violet-500 text-white shadow-xs transition no-wrap cursor-pointer';
-        titleEl.textContent = '최근종가+25% LOC 조기익절 (변형 Ver 1.0 제안 가능)';
+        titleEl.textContent = '최근종가+25% LOC 조기익절';
       } else {
-        headerEl.className = 'relative rounded-t-2xl bg-slate-800 text-white px-4 py-3.5 flex items-center justify-between gap-2 transition-colors';
+        headerEl.className = 'relative rounded-t-2xl bg-slate-800 text-white px-4 py-3.5 min-h-[68px] flex items-center justify-between gap-2 transition-colors';
         stdBtn.className = 'px-2 py-0.5 rounded-md font-extrabold bg-indigo-500 text-white shadow-xs transition no-wrap cursor-pointer';
         if (v1.canSuggestModV1) {
           modBtn.className = 'px-2 py-0.5 rounded-md font-bold text-slate-200 hover:text-white transition no-wrap cursor-pointer';
-          titleEl.textContent = '고정 분할 · 지정가 익절 (변형 Ver 1.0 제안 가능)';
+          titleEl.textContent = '고정 분할 · 지정가 익절';
         } else {
           modBtn.className = 'px-2 py-0.5 rounded-md font-semibold text-slate-500 opacity-50 cursor-not-allowed transition no-wrap';
           titleEl.textContent = '고정 분할 · 지정가 익절 (변형 Ver 1.0 제안 불가)';
@@ -1841,17 +1836,17 @@
 
       let v1Html = '';
       if (p.totalQty === 0) {
-        v1Html = `<div class="p-4 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 text-xs">현재 보유 수량이 0주입니다. 새로운 사이클 1일차 매수를 진행해 주세요.</div>`;
+        v1Html = `<div class="p-4 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 text-xs flex-1 flex items-center">현재 보유 수량이 0주입니다. 새로운 사이클 1일차 매수를 진행해 주세요.</div>`;
       } else if (v1.round >= calc.splits) {
         const qSell = Math.max(1, Math.floor(p.totalQty / 4));
         v1Html = `
-          <div class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold">
+          <div class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex-1 flex items-center">
             40회차 시드 소진 구간: 보유 수량의 1/4 (${qSell}주) MOC/시장가 손절 후 예수금을 확보합니다.
           </div>
         `;
       } else {
         const buyRows = cfg.orderMode === 'fixed' ? `
-          <div class="flex items-center justify-between gap-2 py-1.5 border-b border-slate-100">
+          <div class="flex items-center justify-between gap-2 py-1.5 border-b border-blue-100">
             <span class="text-slate-600">① 평단 LOC 매수 (50%)${renderCapBadge(v1.avgBuy.capped)}</span>
             <span class="font-bold text-blue-700 no-wrap">${fmtUsd(v1.avgBuy.price)} × ${v1.halfQty}주</span>
           </div>
@@ -1860,7 +1855,7 @@
             <span class="font-bold text-blue-700 no-wrap">${fmtUsd(v1.bigBuy.price)} × ${v1.bigQty}주</span>
           </div>
         ` : `
-          <div class="flex items-center justify-between gap-2 py-1.5 border-b border-slate-100">
+          <div class="flex items-center justify-between gap-2 py-1.5 border-b border-blue-100">
             <span class="text-slate-600">① 평단 LOC 매수 (${fmtUsd(v1.unitBudget * 0.5)})${renderCapBadge(v1.avgBuy.capped)}</span>
             <span class="font-bold text-blue-700 no-wrap">${fmtUsd(v1.avgBuy.price)} × ${v1.amtHalfQty}주</span>
           </div>
@@ -1877,7 +1872,7 @@
             : '';
 
           sellBlockHtml = `
-            <div class="rounded-xl bg-emerald-50/70 border border-emerald-100 p-3">
+            <div class="rounded-xl bg-emerald-50/70 border border-emerald-100 p-3 flex-1 flex flex-col justify-center">
               <div class="text-xs font-bold text-emerald-900 mb-1.5 flex items-center flex-wrap gap-1">
                 <span>매도 주문 (전량 지정가 익절)</span>
                 ${suggestHint}
@@ -1895,24 +1890,14 @@
         } else {
           const surgeBadge = `<span class="ml-1.5 px-1.5 py-0.5 rounded bg-violet-100 text-violet-800 border border-violet-300 text-[10px] font-extrabold no-wrap" title="평단(${fmtUsd(calc.baseAvg)}) < 최근종가(${fmtUsd(calc.prevClose)}) × 1.25 = ${fmtUsd(v1.prevSurgePrice)} < 평단×1.12(${fmtUsd(v1.stdSell12)}) 구간 충족">최근종가+25% 조기익절 LOC</span>`;
 
-          const sell10Title = v1.modSell10 < v1.stdSell10
-            ? `조기 LOC 익절 (+${v1.modSell10Pct.toFixed(2)}%)`
-            : `기본 LOC 익절 (+10%)`;
-
-          const sell12Title = `레버리지 조기 LOC 익절 (+${v1.modSell12Pct.toFixed(2)}%)`;
-
           sellBlockHtml = `
-            <div class="rounded-xl bg-violet-50/60 border border-violet-200 p-3">
+            <div class="rounded-xl bg-violet-50/60 border border-violet-200 p-3 flex-1 flex flex-col justify-center">
               <div class="text-xs font-bold text-violet-950 mb-1.5 flex items-center flex-wrap gap-1">
                 <span>매도 주문 (전량 장마감 LOC 익절)</span>
                 ${surgeBadge}
               </div>
-              <div class="flex items-center justify-between gap-2 py-1.5 border-b border-violet-100">
-                <span class="text-slate-600">${sell10Title}</span>
-                <span class="font-bold text-violet-700 no-wrap">${fmtUsd(v1.modSell10)} × ${p.totalQty}주</span>
-              </div>
               <div class="flex items-center justify-between gap-2 py-1.5">
-                <span class="text-slate-600">${sell12Title}</span>
+                <span class="text-slate-600">조기 LOC 익절 (+${v1.modSell12Pct.toFixed(2)}%)</span>
                 <span class="font-bold text-violet-700 no-wrap">${fmtUsd(v1.modSell12)} × ${p.totalQty}주</span>
               </div>
             </div>
@@ -1920,7 +1905,7 @@
         }
 
         v1Html = `
-          <div class="rounded-xl bg-blue-50/70 border border-blue-100 p-3">
+          <div class="rounded-xl bg-blue-50/70 border border-blue-100 p-3 flex-1 flex flex-col justify-center">
             <div class="text-xs font-bold text-blue-900 mb-1.5">매수 주문 (장마감 LOC)</div>
             ${buyRows}
           </div>
@@ -1938,10 +1923,10 @@
 
       let v4Html = '';
       if (p.totalQty === 0) {
-        v4Html = `<div class="p-4 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 text-xs">현재 보유 수량이 0주입니다. 새로운 사이클 1일차 매수를 진행해 주세요.</div>`;
+        v4Html = `<div class="p-4 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 text-xs flex-1 flex items-center">현재 보유 수량이 0주입니다. 새로운 사이클 1일차 매수를 진행해 주세요.</div>`;
       } else if (p.tValue > calc.splits - 1) {
         v4Html = `
-          <div class="rounded-xl bg-amber-50 border border-amber-200 p-3 space-y-2 text-xs">
+          <div class="rounded-xl bg-amber-50 border border-amber-200 p-3 space-y-2 text-xs flex-1 flex flex-col justify-center">
             <div class="font-bold text-amber-900">리버스 모드 가동 (T = ${p.tValue.toFixed(2)})</div>
             <div class="flex justify-between gap-2"><span>① 첫날 MOC 매도 (보유량 1/20)</span><span class="font-bold text-rose-700 no-wrap">시장가(MOC) × ${v4.revSellQty}주</span></div>
             <div class="flex justify-between gap-2"><span>② 익일부터 별지점 LOC 매수 (잔금 1/4)${renderCapBadge(v4.starBuy.capped)}</span><span class="font-bold text-blue-700 no-wrap">${fmtUsd(v4.starBuy.price)} × ${v4.revBuyQty}주</span></div>
@@ -1989,11 +1974,11 @@
         }
 
         v4Html = `
-          <div class="rounded-xl bg-blue-50/70 border border-blue-100 p-3">
+          <div class="rounded-xl bg-blue-50/70 border border-blue-100 p-3 flex-1 flex flex-col justify-center">
             <div class="text-xs font-bold text-blue-900 mb-1.5">매수 주문 (동적 1회매수금 ${fmtUsd(v4.unitBudget)})</div>
             ${buySection}
           </div>
-          <div class="rounded-xl bg-emerald-50/70 border border-emerald-100 p-3">
+          <div class="rounded-xl bg-emerald-50/70 border border-emerald-100 p-3 flex-1 flex flex-col justify-center">
             <div class="text-xs font-bold text-emerald-900 mb-1.5">매도 주문 (쿼터 별지점 + 잔여 +20%)</div>
             <div class="flex items-center justify-between gap-2 py-1.5 border-b border-emerald-100/70">
               <span class="text-slate-600">① 보유 1/4 별지점 LOC 매도</span>
@@ -2477,8 +2462,7 @@
           text = `[${cfg.ticker} 변형 Ver 1.0 주문표 | 최근종가 $${calc.prevClose.toFixed(2)} × 1.25 조기익절 LOC]\n` +
                  `- 평단 LOC 매수: $${v1.avgBuy.price.toFixed(2)} × ${avgQ}주${v1.avgBuy.capped ? ' (자전방지 상한적용)' : ''}\n` +
                  `- 큰수 LOC 매수: $${v1.bigBuy.price.toFixed(2)} × ${bigQ}주${v1.bigBuy.capped ? ' (자전방지 상한적용)' : ''}\n` +
-                 `- 전량 LOC 매도(+${v1.modSell10Pct.toFixed(2)}%): $${v1.modSell10.toFixed(2)} × ${p.totalQty}주\n` +
-                 `- 전량 LOC 매도(+${v1.modSell12Pct.toFixed(2)}%): $${v1.modSell12.toFixed(2)} × ${p.totalQty}주`;
+                 `- 조기 LOC 익절(+${v1.modSell12Pct.toFixed(2)}%): $${v1.modSell12.toFixed(2)} × ${p.totalQty}주`;
         } else {
           text = `[${cfg.ticker} 라오어 Ver 1.0 주문표]\n` +
                  `- 평단 LOC 매수: $${v1.avgBuy.price.toFixed(2)} × ${avgQ}주${v1.avgBuy.capped ? ' (자전방지 상한적용)' : ''}\n` +
@@ -2641,7 +2625,6 @@
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (data && typeof data.c === 'number' && data.c > 0) {
-          // 장중이면 pc(직전 거래일 종가), 장 마감 후(한국시간 오전 6시 이후~밤 11시 반 전)면 c(오늘/가장 최근 종가) 사용
           const marketOpen = isUsRegularMarketOpenNow();
           const latestClose = marketOpen
             ? ((typeof data.pc === 'number' && data.pc > 0) ? data.pc : data.c)
@@ -2662,7 +2645,6 @@
           const marketOpen = typeof data.is_market_open === 'boolean'
             ? data.is_market_open
             : isUsRegularMarketOpenNow();
-          // 장 마감 후에는 close가 오늘(가장 최근) 정규장 종가이고, previous_close는 전전일 종가임
           const latestClose = marketOpen
             ? ((!isNaN(prevVal) && prevVal > 0) ? prevVal : closeVal)
             : closeVal;
